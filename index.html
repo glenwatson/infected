@@ -1,0 +1,178 @@
+<html>
+	<head>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+		<title>Stars</title>
+		<link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+		<style>
+			html, body {
+				margin: 0;
+				padding: 0;
+			}
+			body {
+				font-family: 'Montserrat', sans-serif;
+				font-size: 22px;
+			}
+			canvas {
+				position: absolute;
+				left: 0;
+				top: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="field">No canvas support</canvas>
+		<canvas id="static"></canvas>
+		<script>
+			// ==set-up==
+			// =settings=
+			var ANIMATION_FRAME = true;
+			var SPEED = 1; // only used if ANIMATION_FRAME == false
+			var PAUSED = false;
+			var DEBUG = true;
+			var MODE;
+			var NUM_SICK = 1;
+			var NUM_HEALTHY = 100;
+			// =template methods=
+			var noop = function (){};
+
+			// =canvas=
+			var canvas = document.getElementById('field');
+			canvas.width = document.body.clientWidth;
+			canvas.height = document.body.clientHeight;
+			var ctx = canvas.getContext('2d');
+			
+			var staticCanvas = document.getElementById('static');
+			staticCanvas.width = canvas.width;
+			staticCanvas.height = canvas.height;
+			var staticCtx = staticCanvas.getContext('2d');
+			staticCtx.font = "8pt Arial";
+			staticCtx.textAlign = "end";
+			
+			// ==populate==
+			var all = [];
+			var sick = [];
+			var healthy = [];
+			for (var i=0; i<NUM_SICK; i++) {
+				var s = randomPos();
+				s.type = 'sick';
+				sick.push(s);
+				all.push(s);
+			}
+			for (var i=0; i<NUM_HEALTHY; i++) {
+				var h = randomPos();
+				h.type = 'healthy';
+				healthy.push(h);
+				all.push(h);
+			}
+
+			// ==callback==
+			function tick() {
+				if (!PAUSED) {
+					moveSick();
+					moveHealthy();
+				}
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				draw(all);
+				if (DEBUG) {
+					drawFramerate();
+					drawFps();
+				}
+				if (ANIMATION_FRAME) {
+					requestAnimationFrame(tick);
+				}
+			}
+			requestAnimationFrame(tick);
+
+			// ==movement==
+			function moveSick() {
+				var i;
+				for (i in sick) {
+					moveRandom(sick[i]);
+					wrap(sick[i]);
+				}
+			}
+			function moveHealthy() {
+				var i;
+				for (i in healthy) {
+					moveRandom(healthy[i]);
+					wrap(healthy[i]);
+				}
+			}
+			function moveRandom(actor) {
+				var entropy = Math.random();
+				if (entropy > .5) {
+					actor.x++;
+				} else {
+					actor.x--;
+				}
+				if (entropy % 0.1 > .05) {
+					actor.y++;
+				} else {
+					actor.y--;
+				}
+			}
+			function wrap(actor) {
+				if (actor.x < 0) {
+					actor.x = canvas.width;
+				}
+				if (actor.x > canvas.width) {
+					actor.x = 0;
+				}
+				if (actor.y < 0) {
+					actor.y = canvas.height;
+				}
+				if (actor.y > canvas.height) {
+					actor.y = 0;
+				}
+			}
+			// =fps=
+			var drawFps = (function () {
+				var fps = 0;
+				var frameCount = 0;
+				setInterval(function () {
+					fps = frameCount;
+					frameCount = 0;
+				}, 1000); //1 second
+				return function () {
+					frameCount++;
+					ctx.fillStyle = "#000000";
+					ctx.fillText(fps+" fps", canvas.width-30, 20);
+				}
+			})();
+			
+			// =framerate=
+			var drawFramerate = (function () {
+				var lastFrame = new Date().getTime();
+				return function () {
+					var thisFrame = new Date().getTime();
+					ctx.fillStyle = "#000000";
+					ctx.fillText((thisFrame - lastFrame) / 1000, canvas.width-30, 10);
+					lastFrame = thisFrame;
+				}
+			})();
+			
+			// ==draw==
+			function draw(actors) {
+				var actor, i;
+				for (i in actors) {
+					actor = actors[i];
+					switch(actor.type) {
+						case 'sick':
+							ctx.fillStyle = '#33cc33';
+						break;
+						case 'healthy':
+							ctx.fillStyle = '#777777';
+						break;
+					}
+					ctx.fillRect(actor.x, actor.y, 10, 10);
+				}
+			}
+			function randomPos() {
+				return {
+					x: Math.random() * canvas.width,
+					y: Math.random() * canvas.height,
+				};
+			}
+		</script>
+	</body>
+</html>
