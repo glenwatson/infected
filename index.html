@@ -130,7 +130,7 @@
 					}
 				}
 			}
-
+			
 			//populate sick
 			for (var i=0; i<NUM_SICK; i++) {
 				var s = randomPos();
@@ -153,6 +153,8 @@
 				model.healthy.push(h);
 			}
 			
+//model.sick.push({x:25, y:8, type:'sick'});
+//model.healthy.push({x:20, y:9, type:'healthy', state:0});
 			// ==events==
 			// =mouse clicks=
 			;(function () {
@@ -167,9 +169,9 @@
 						mouseDownPoint = {x: Math.floor(e.clientX / PIXELS_PER_CELL), y: Math.floor(e.clientY / PIXELS_PER_CELL)};
 						canvas.onmousemove = onmove;
 						//remove sick
-						model.sick = model.sick.filter(function(x){ return !inRange(mouseDownPoint, x);});
+						model.sick = model.sick.filter(function(x){ return !inRange(mouseDownPoint, x, 1);});
 						//remove healthy
-						model.healthy = model.healthy.filter(function(x){ return !inRange(mouseDownPoint, x);});
+						model.healthy = model.healthy.filter(function(x){ return !inRange(mouseDownPoint, x, 1);});
 						staticCtx.fillStyle = '#dddddd';
 						staticCtx.beginPath();
 						staticCtx.arc(e.clientX, e.clientY, PIXELS_PER_CELL, 0, Math.PI*2, true);
@@ -193,8 +195,8 @@
 					}
 				};
 			})();
-			function inRange(pos1, pos2) {
-				return Math.abs(pos1.x - pos2.x) <= 1 && Math.abs(pos1.y - pos2.y) <= 1;
+			function inRange(pos1, pos2, dist) {
+				return Math.abs(pos1.x - pos2.x) <= dist && Math.abs(pos1.y - pos2.y) <= dist;
 				//return dist(pos1, pos2) < 4;
 			}
 			function positionRelativeTo(pos1, pos2) {
@@ -262,7 +264,8 @@
 							moveRandom(healthy);
 						}
 					} else if (healthy.state === 1) { //panicked
-						runAwayFrom(healthy, healthy.seenAt, posMap);
+						//runAwayFrom(healthy, healthy.seenAt, posMap);
+						avoid(healthy, model.sick, posMap);
 					} else if (healthy.state >= 2) { //hysterical
 						avoid(healthy, model.sick, posMap);
 					}
@@ -280,12 +283,18 @@
 					} else {
 						posMap[posHash] = healthy;
 						// Are they near an infected?
-						var closeByInfected = model.sick.filter(function(s) {return inRange(s, healthy);});
+						var closeByInfected = model.sick.filter(function(s) {return inRange(s, healthy, 1);});
 						if (closeByInfected.length > 0) {
 							healthy.state++;
 							//start running
 							healthy.seenAt = positionRelativeTo(healthy, closeByInfected[0]);
 						}
+					}
+					//spread the fear
+					if (healthy.state > 0) {
+						model.healthy
+							.filter(function(h) {return h.state <= 0 && inRange(h, healthy, 1);})
+							.forEach(function(h) { h.state = 1; h.seenAt = healthy.seenAt });
 					}
 				}
 			}
@@ -308,21 +317,22 @@
 					return;
 				}
 				//move towards target
+				var direction = {x:0, y:0};
 				if (actor.x - closestTarget.x !== 0) {
 					if (actor.x - closestTarget.x < 0) {
-						actor.x++;
+						direction.x = 1;
 					} else {
-						actor.x--;
+						direction.x = -1;
 					}
 				}
 				if (actor.y - closestTarget.y !== 0) {
 					if (actor.y - closestTarget.y < 0) {
-						actor.y++;
+						direction.y = 1;
 					} else {
-						actor.y--;
+						direction.y = -1;
 					}
 				}
-				tryMove(actor, posMap);
+				tryMove2(actor, direction, posMap);
 			}
 			function avoid(actor, targets, posMap) {
 				actor.oldX = actor.x;
@@ -334,12 +344,10 @@
 				actor.y += openSpace.y;
 			}
 
-			function runAwayFrom(actor, direction, posMap) {
+			function runAwayFrom(actor, target, posMap) {
 				actor.oldX = actor.x;
 				actor.oldY = actor.y;
-				actor.x -= direction.x;
-				actor.y -= direction.y;
-				tryMove(actor, posMap);
+				tryMove2(actor, {x: -target.x, y:-target.y}, posMap);
 			}
 			function tryMove(actor, posMap) {
 				//check for obstacle
@@ -354,13 +362,88 @@
 					}
 				}
 			}
+			function tryMove2(actor, direction, posMap) {
+				//check for obstacle
+				if (!posMap[model.getPosHash(actor.x+direction.x, actor.y+direction.y)]) { //not blocked
+					actor.x += direction.x;
+					actor.y += direction.y;
+					return;
+				}
+				//try to move X only
+				if (!posMap[model.getPosHash(actor.x+direction.x, actor.y+direction.y)]) { //not blocked
+					actor.x += direction.x;
+					actor.y += direction.y;
+					return;
+				}
+				//try to move Y only
+				if (!posMap[model.getPosHash(actor.x+direction.x, actor.y+direction.y)]) { //not blocked
+					actor.x += direction.x;
+					actor.y += direction.y;
+					return;
+				}
+				if (direction.y === 0) {
+					// try to move diagonally
+					if (!posMap[model.getPosHash(actor.x+direction.x, actor.y+1)]) { //not blocked
+						actor.x += direction.x;
+						actor.y += 1;
+						return;
+					}
+					// try to move diagonally
+					if (!posMap[model.getPosHash(actor.x+direction.x, actor.y-1)]) { //not blocked
+						actor.x += direction.x;
+						actor.y += -1;
+						return;
+					}
+					// try to move sideways
+					if (!posMap[model.getPosHash(actor.x, actor.y+1)]) { //not blocked
+						actor.x += 0;
+						actor.y += 1;
+						return;
+					}
+					// try to move sideways
+					if (!posMap[model.getPosHash(actor.x, actor.y-1)]) { //not blocked
+						actor.x += 0;
+						actor.y += -1;
+						return;
+					}
+				}
+				if (direction.x === 0) {
+					// try to move diagonally
+					if (!posMap[model.getPosHash(actor.x+1, actor.y+direction.y)]) { //not blocked
+						actor.x += 1;
+						actor.y += direction.y;
+						return;
+					}
+					// try to move diagonally
+					if (!posMap[model.getPosHash(actor.x-1, actor.y+direction.y)]) { //not blocked
+						actor.x += -1;
+						actor.y += direction.y;
+						return;
+					}
+					// try to move sideways
+					if (!posMap[model.getPosHash(actor.x+1, actor.y)]) { //not blocked
+						actor.x += 1;
+						actor.y += 0;
+						return;
+					}
+					// try to move sideways
+					if (!posMap[model.getPosHash(actor.x-1, actor.y)]) { //not blocked
+						actor.x += -1;
+						actor.y += 0;
+						return;
+					}
+				}
+				//blocked
+			}
 			function findOpenSpaceAround(actor, posMap) {
-				var x, y, directions = [-1, 0, 1].shuffle();
+				var x, y, 
+					Xdirections = [-1, 0, 1].shuffle(), 
+					Ydirections = [-1, 0, 1].shuffle();
 				//find unoccupied space
-				for (var x=0; x<directions.length; x++) {
-					for (var y=0; y<directions.length; y++) {
-						if (!posMap[model.getPosHash(actor.x+directions[x], actor.y+directions[y])]) {
-							return {x: directions[x], y: directions[y]};
+				for (var x=0; x<Xdirections.length; x++) {
+					for (var y=0; y<Ydirections.length; y++) {
+						if (!posMap[model.getPosHash(actor.x+Xdirections[x], actor.y+Ydirections[y])]) {
+							return {x: Xdirections[x], y: Ydirections[y]};
 						}
 					}
 				}
