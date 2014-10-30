@@ -60,8 +60,11 @@
 				ratio: function() {
  					return this.sick.length+':'+this.healthy.length;
 				},
-				getPosHash: function(a) {
-					return a.x * this.height + a.y;
+				getPosHashActor: function(a) {
+					return this.getPosHash(a.x, a.y);
+				},
+				getPosHash: function(x, y) {
+					return x * this.height + y;
 				},
 			};
 			// ==populate==
@@ -74,7 +77,7 @@
 				var obstacle = model.obstacles[i];
 				for (x = obstacle.x; x < obstacle.x+obstacle.w; x++) {
 					for (y = obstacle.y; y < obstacle.y+obstacle.h; y++) {
-						staticPosHash[model.getPosHash({'x':x, 'y':y})] = true;
+						staticPosHash[model.getPosHashActor({'x':x, 'y':y})] = true;
 					}
 				}
 			}
@@ -82,7 +85,7 @@
 			for (var i=0; i<NUM_SICK; i++) {
 				var s = randomPos();
 				//keep trying until we aren't inside an obstacle
-				while (staticPosHash[model.getPosHash(s)]) {
+				while (staticPosHash[model.getPosHashActor(s)]) {
 					s = randomPos();
 				}
 				s.type = 'sick';
@@ -92,7 +95,7 @@
 			for (var i=0; i<NUM_HEALTHY; i++) {
 				var h = randomPos();
 				//keep trying until we aren't inside an obstacle
-				while (staticPosHash[model.getPosHash(h)]) {
+				while (staticPosHash[model.getPosHashActor(h)]) {
 					h = randomPos();
 				}
 				h.type = 'healthy';
@@ -188,7 +191,7 @@
 						moveTowards(sick, model.healthy, posMap);
 						wrap(sick);
 					}
-					posHash = model.getPosHash(sick);
+					posHash = model.getPosHashActor(sick);
 					if (posMap[posHash]) { //collision
 						sick.x = sick.oldX;
 						sick.y = sick.oldY;
@@ -201,7 +204,7 @@
 					healthy = model.healthy[i];
 					moveRandom(healthy);
 					wrap(healthy);
-					posHash = model.getPosHash(healthy);
+					posHash = model.getPosHashActor(healthy);
 					if (posMap[posHash]) { //collision
 						if (posMap[posHash].type === 'sick') {
 							//infected
@@ -251,11 +254,11 @@
 					}
 				}
 				//check for obstacle
-				if (posMap[model.getPosHash(actor)]) { //blocked
+				if (posMap[model.getPosHashActor(actor)]) { //blocked
 					//try to move X only
 					var y = actor.y;
 					actor.y = actor.oldY;
-					if (posMap[model.getPosHash(actor)]) { //still blocked
+					if (posMap[model.getPosHashActor(actor)]) { //still blocked
 						//try to move Y only
 						actor.y = y;
 						actor.x = actor.oldX;
@@ -339,7 +342,7 @@
 			function drawHashPos() {
 				for (var w=0; w<model.width; w++) {
 					for (var h=0; h<model.height; h++) {
-						ctx.fillText(model.getPosHash({x:w, y:h}), w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
+						ctx.fillText(model.getPosHashActor({x:w, y:h}), w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
 					}
 				}
 			}
