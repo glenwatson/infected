@@ -25,14 +25,14 @@
 		<script>
 			// ==set-up==
 			// =settings=
-			var ANIMATION_FRAME = true;
-			var SPEED = 1; // only used if ANIMATION_FRAME == false
+			var ANIMATION_FRAME = false;
+			var SPEED = 50; // only used if ANIMATION_FRAME !== true
 			var PAUSED = false;
 			var DEBUG = true;
 			var MODE = 0;
 			var NUM_SICK = 1;
 			var NUM_HEALTHY = 100;
-			var PIXES_PER_CELL = 10;
+			var PIXES_PER_CELL = 30;
 			// =template methods=
 			var noop = function (){};
 
@@ -46,8 +46,7 @@
 			staticCanvas.width = canvas.width;
 			staticCanvas.height = canvas.height;
 			var staticCtx = staticCanvas.getContext('2d');
-			staticCtx.font = "8pt Arial";
-			staticCtx.textAlign = "end";
+			staticCtx.font = '8pt Arial';
 			
 			var model = {
 				width: Math.round(canvas.width / PIXES_PER_CELL),
@@ -56,6 +55,9 @@
 				sick: [],
 				healthy: [],
 				obstacles: [],
+				ratio: function() {
+ 					return this.sick.length+':'+this.healthy.length;
+				}
 			};
 			// ==populate==
 			for (var i=0; i<NUM_SICK; i++) {
@@ -90,7 +92,11 @@
 
 			// ==movement==
 			function move() {
-				var i, posMap = {}, posHash, sick, healthy;
+				var i, 
+					posMap = {}, //location sensitve hash map of all actors
+					posHash, 
+					sick, 
+					healthy;
 				for (i in model.sick) {
 					sick = model.sick[i];
 					moveRandom(sick);
@@ -109,11 +115,17 @@
 					wrap(healthy);
 					posHash = getPosHash(healthy);
 					if (posMap[posHash]) { //collision
+						if (posMap[posHash].type === 'sick') {
+							//infected
+							console.log('infected! '+model.ratio());
+							healthy.type = 'sick';
+							model.sick.push(model.healthy.splice(i, 1)[0]);
+						}
 						healthy.x = healthy.oldX;
 						healthy.y = healthy.oldY;
 						
 					} else {
-						posMap[posHash] = healthy[i];
+						posMap[posHash] = healthy;
 					}
 				}
 			}
@@ -156,8 +168,8 @@
 				}, 1000); //1 second
 				return function () {
 					frameCount++;
-					ctx.fillStyle = "#000000";
-					ctx.fillText(fps+" fps", canvas.width-30, 20);
+					ctx.fillStyle = '#000000';
+					ctx.fillText(fps+' fps', canvas.width-30, 20);
 				}
 			})();
 			
@@ -166,7 +178,7 @@
 				var lastFrame = new Date().getTime();
 				return function () {
 					var thisFrame = new Date().getTime();
-					ctx.fillStyle = "#000000";
+					ctx.fillStyle = '#000000';
 					ctx.fillText((thisFrame - lastFrame) / 1000, canvas.width-30, 10);
 					lastFrame = thisFrame;
 				}
@@ -187,6 +199,9 @@
 					}
 					ctx.fillRect(actor.x * PIXES_PER_CELL, actor.y * PIXES_PER_CELL, PIXES_PER_CELL, PIXES_PER_CELL);
 				}
+				//draw infected to health ratio
+				ctx.fillStyle = '#000000';
+				ctx.fillText(model.ratio(), 1, 9);
 			}
 			function randomPos() {
 				return {
@@ -197,6 +212,15 @@
 			function getPosHash(actor) {
 				return actor.x * model.width + actor.y;
 			}
+			//	=start=
+			;(function () {
+				if (ANIMATION_FRAME === true && window.requestAnimationFrame) {
+					tick();
+				} else {
+					ANIMATION_FRAME = false;
+					setInterval(tick, SPEED);
+				}
+			})();
 		</script>
 	</body>
 </html>
