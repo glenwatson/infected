@@ -26,13 +26,13 @@
 			// ==set-up==
 			// =settings=
 			var ANIMATION_FRAME = false;
-			var SPEED = 150; // only used if ANIMATION_FRAME !== true
+			var SPEED = 100; // only used if ANIMATION_FRAME !== true
 			var PAUSED = false;
 			var DEBUG = false;
 			var MODE = 0;
-			var NUM_SICK = 1;
+			var NUM_SICK = 3;
 			var NUM_HEALTHY = 100;
-			var PIXES_PER_CELL = 30;
+			var PIXELS_PER_CELL = 30;
 			// =template methods=
 			var noop = function (){};
 
@@ -50,12 +50,13 @@
 			staticCtx.font = '8pt Arial';
 			
 			var model = {
-				width: Math.round(canvas.width / PIXES_PER_CELL),
-				height: Math.round(canvas.height / PIXES_PER_CELL),
+				width: Math.round(canvas.width / PIXELS_PER_CELL),
+				height: Math.round(canvas.height / PIXELS_PER_CELL),
 				all: [],
 				sick: [],
 				healthy: [],
 				obstacles: [],
+				
 				ratio: function() {
  					return this.sick.length+':'+this.healthy.length;
 				},
@@ -86,7 +87,6 @@
 				}
 				s.type = 'sick';
 				model.sick.push(s);
-				model.all.push(s);
 			}
 			//populate healthy
 			for (var i=0; i<NUM_HEALTHY; i++) {
@@ -97,7 +97,6 @@
 				}
 				h.type = 'healthy';
 				model.healthy.push(h);
-				model.all.push(h);
 			}
 			
 			// ==events==
@@ -107,21 +106,27 @@
 				var mouseDownForce = null;
 				var dragOffset = {x:0, y:0};
 				function onmove(e) {
-					var mouseMovePoint = {x: e.clientX, y: e.clientY};
-					console.log('onmove');
+					var mouseMovePoint = {x: e.clientX / PIXELS_PER_CELL, y: e.clientY / PIXELS_PER_CELL};
 				}
 				canvas.onmousedown = function (e) {
 					if (e.which == 1) {
-						mouseDownPoint = {x: e.clientX, y: e.clientY};
+						mouseDownPoint = {x: Math.floor(e.clientX / PIXELS_PER_CELL), y: Math.floor(e.clientY / PIXELS_PER_CELL)};
 						canvas.onmousemove = onmove;
-						console.log('onmousedown');
+						//remove sick
+						model.sick = model.sick.filter(function(x){ return !inRange(mouseDownPoint, x);});
+						//remove healthy
+						model.healthy = model.healthy.filter(function(x){ return !inRange(mouseDownPoint, x);});
+						staticCtx.fillStyle = '#dddddd';
+						staticCtx.beginPath();
+						staticCtx.arc(e.clientX, e.clientY, PIXELS_PER_CELL, 0, Math.PI*2, true);
+						staticCtx.fill();
+						staticCtx.closePath();
 					}
 				};
 				canvas.onmouseup = function (e) {
 					if (e.which == 1) {
 						var mouseUpPoint = {x: e.clientX, y: e.clientY};
 						canvas.onmousemove = null;
-						console.log('onmouseup');
 					}
 				};
 				
@@ -130,11 +135,17 @@
 					e = e || window.event;
 					switch (e.charCode || e.keyCode || e.key) {
 						default:
-							console.log(e.charCode || e.keyCode || e.key);
 							break;
 					}
 				};
 			})();
+			function inRange(pos1, pos2) {
+				return Math.abs(pos1.x - pos2.x) <= 1 && Math.abs(pos1.y - pos2.y) <= 1;
+				//return dist(pos1, pos2) < 4;
+			}
+			function dist(pos1, pos2) {
+				return Math.pow(pos1.x - pos2.x, 2) + Math.pow(pos1.y - pos2.y, 2);
+			}
 			
 			
 			drawBG(staticCtx);
@@ -143,12 +154,14 @@
 				if (!PAUSED) {
 					move();
 					ctx.clearRect(0, 0, canvas.width, canvas.height);
-					draw(model.all);
+					draw(model.sick);
+					draw(model.healthy);
 				}
 				if (DEBUG) {
 					drawFramerate();
 					drawFps();
-					drawHashPos();
+					//drawHashPos();
+					drawPos();
 				}
 				if (ANIMATION_FRAME) {
 					requestAnimationFrame(tick);
@@ -270,7 +283,7 @@
 							ctx.fillStyle = '#777777';
 						break;
 					}
-					ctx.fillRect(actor.x * PIXES_PER_CELL, actor.y * PIXES_PER_CELL, PIXES_PER_CELL, PIXES_PER_CELL);
+					ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
 				}
 				//draw infected to health ratio
 				ctx.fillStyle = '#000000';
@@ -279,7 +292,14 @@
 			function drawHashPos() {
 				for (var w=0; w<model.width; w++) {
 					for (var h=0; h<model.height; h++) {
-						ctx.fillText(model.getPosHash({x:w, y:h}), w*PIXES_PER_CELL, h*PIXES_PER_CELL+8);
+						ctx.fillText(model.getPosHash({x:w, y:h}), w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
+					}
+				}
+			}
+			function drawPos() {
+				for (var w=0; w<model.width; w++) {
+					for (var h=0; h<model.height; h++) {
+						ctx.fillText(w+','+h, w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
 					}
 				}
 			}
@@ -287,7 +307,7 @@
 				context.fillStyle = '#bbbbbb';
 				for (var i in model.obstacles) {
 					var o = model.obstacles[i];
-					context.fillRect(o.x * PIXES_PER_CELL, o.y * PIXES_PER_CELL, o.w * PIXES_PER_CELL, o.h * PIXES_PER_CELL);
+					context.fillRect(o.x * PIXELS_PER_CELL, o.y * PIXELS_PER_CELL, o.w * PIXELS_PER_CELL, o.h * PIXELS_PER_CELL);
 				}
 			}
 			function randomPos() {
