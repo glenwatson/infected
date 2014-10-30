@@ -149,6 +149,7 @@
 			
 			
 			drawBG(staticCtx);
+			var lastSeen = Date.now();
 			// ==callback==
 			function tick() {
 				if (!PAUSED) {
@@ -166,6 +167,9 @@
 				if (ANIMATION_FRAME) {
 					requestAnimationFrame(tick);
 				}
+				var time = Date.now();
+				if (time - lastSeen > 2*SPEED) console.log('cheating!');
+				lastSeen = time;
 			}
 			requestAnimationFrame(tick);
 
@@ -203,7 +207,6 @@
 					if (posMap[posHash]) { //collision
 						if (posMap[posHash].type === 'sick') {
 							//infected
-							console.log('infected! '+model.ratio());
 							healthy.type = 'sick';
 							model.sick.push(model.healthy.splice(i, 1)[0]);
 						}
