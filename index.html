@@ -250,7 +250,8 @@
 					}
 				}
 				//move healthy
-				for (i in model.healthy) {
+				var i = model.healthy.length;
+				while(i--) {
 					healthy = model.healthy[i];
 					if (healthy.state === 0) { //calm
 						if (Math.random() < .05) {
@@ -264,11 +265,10 @@
 					wrap(healthy);
 					posHash = model.getPosHashActor(healthy);
 					if (posMap[posHash]) { //collision
-						if (posMap[posHash].type === 'sick') {
-							//infected
-							console.log('infected! '+model.ratio());
+						if (posMap[posHash].type === 'sick') { //infected
 							healthy.type = 'sick';
 							model.sick.push(model.healthy.splice(i, 1)[0]);
+							console.log('infected! '+model.ratio());
 						}
 						healthy.x = healthy.oldX;
 						healthy.y = healthy.oldY;
