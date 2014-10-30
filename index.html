@@ -98,7 +98,7 @@
 				h.type = 'healthy';
 				model.healthy.push(h);
 			}
-			
+
 			// ==events==
 			// =mouse clicks=
 			;(function () {
@@ -184,8 +184,10 @@
 				//move sick
 				for (i in model.sick) {
 					sick = model.sick[i];
-					moveTowards(sick, model.healthy);
-					wrap(sick);
+					if (Math.random() < .5) {
+						moveTowards(sick, model.healthy, posMap);
+						wrap(sick);
+					}
 					posHash = model.getPosHash(sick);
 					if (posMap[posHash]) { //collision
 						sick.x = sick.oldX;
@@ -215,7 +217,7 @@
 					}
 				}
 			}
-			function moveTowards(actor, targets) {
+			function moveTowards(actor, targets, posMap) {
 				actor.oldX = actor.x;
 				actor.oldY = actor.y;
 				//find closest target
@@ -246,6 +248,17 @@
 						actor.y++;
 					} else {
 						actor.y--;
+					}
+				}
+				//check for obstacle
+				if (posMap[model.getPosHash(actor)]) { //blocked
+					//try to move X only
+					var y = actor.y;
+					actor.y = actor.oldY;
+					if (posMap[model.getPosHash(actor)]) { //still blocked
+						//try to move Y only
+						actor.y = y;
+						actor.x = actor.oldX;
 					}
 				}
 			}
