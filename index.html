@@ -1,7 +1,7 @@
 <html>
 	<head>
 		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-		<title>Stars</title>
+		<title>Infected!</title>
 		<link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
 		<style>
 			html, body {
@@ -130,6 +130,7 @@
 					}
 				}
 			}
+
 			//populate sick
 			for (var i=0; i<NUM_SICK; i++) {
 				var s = randomPos();
@@ -151,7 +152,7 @@
 				h.state = 0; //calm => panicked => hysterical
 				model.healthy.push(h);
 			}
-
+			
 			// ==events==
 			// =mouse clicks=
 			;(function () {
@@ -195,6 +196,9 @@
 			function inRange(pos1, pos2) {
 				return Math.abs(pos1.x - pos2.x) <= 1 && Math.abs(pos1.y - pos2.y) <= 1;
 				//return dist(pos1, pos2) < 4;
+			}
+			function positionRelativeTo(pos1, pos2) {
+				return {x: pos2.x - pos1.x, y: pos2.y - pos1.y};
 			}
 			function dist(pos1, pos2) {
 				return Math.pow(pos1.x - pos2.x, 2) + Math.pow(pos1.y - pos2.y, 2);
@@ -258,9 +262,9 @@
 							moveRandom(healthy);
 						}
 					} else if (healthy.state === 1) { //panicked
-						avoid(healthy, model.sick, posMap);
+						runAwayFrom(healthy, healthy.seenAt, posMap);
 					} else if (healthy.state >= 2) { //hysterical
-						moveRandom(healthy);
+						avoid(healthy, model.sick, posMap);
 					}
 					wrap(healthy);
 					posHash = model.getPosHashActor(healthy);
@@ -276,8 +280,11 @@
 					} else {
 						posMap[posHash] = healthy;
 						// Are they near an infected?
-						if (model.sick.some(function(s) {return inRange(s, healthy);})) {
+						var closeByInfected = model.sick.filter(function(s) {return inRange(s, healthy);});
+						if (closeByInfected.length > 0) {
 							healthy.state++;
+							//start running
+							healthy.seenAt = positionRelativeTo(healthy, closeByInfected[0]);
 						}
 					}
 				}
@@ -315,6 +322,26 @@
 						actor.y--;
 					}
 				}
+				tryMove(actor, posMap);
+			}
+			function avoid(actor, targets, posMap) {
+				actor.oldX = actor.x;
+				actor.oldY = actor.y;
+				var openSpace = findOpenSpaceAround(actor, posMap);
+	
+				//move into space (or not at all)
+				actor.x += openSpace.x;
+				actor.y += openSpace.y;
+			}
+
+			function runAwayFrom(actor, direction, posMap) {
+				actor.oldX = actor.x;
+				actor.oldY = actor.y;
+				actor.x -= direction.x;
+				actor.y -= direction.y;
+				tryMove(actor, posMap);
+			}
+			function tryMove(actor, posMap) {
 				//check for obstacle
 				if (posMap[model.getPosHashActor(actor)]) { //blocked
 					//try to move X only
@@ -326,15 +353,6 @@
 						actor.x = actor.oldX;
 					}
 				}
-			}
-			function avoid(actor, targets, posMap) {
-				actor.oldX = actor.x;
-				actor.oldY = actor.y;
-				var openSpace = findOpenSpaceAround(actor, posMap);
-	
-				//move into space (or not at all)
-				actor.x += openSpace.x;
-				actor.y += openSpace.y;
 			}
 			function findOpenSpaceAround(actor, posMap) {
 				var x, y, directions = [-1, 0, 1].shuffle();
