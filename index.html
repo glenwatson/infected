@@ -219,14 +219,14 @@
 				var entropy = Math.random();
 				actor.oldX = actor.x;
 				actor.oldY = actor.y;
-				if (entropy > .5) {
+				if (entropy > .7) {
 					actor.x++;
-				} else {
+				} else if (entropy < .3) {
 					actor.x--;
 				}
-				if (entropy % 0.1 > .05) {
+				if (entropy % 0.1 > .07) {
 					actor.y++;
-				} else {
+				} else if (entropy % 0.1 < .03) {
 					actor.y--;
 				}
 			}
