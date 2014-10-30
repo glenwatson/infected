@@ -74,11 +74,10 @@
 			// ==callback==
 			function tick() {
 				if (!PAUSED) {
-					moveSick();
-					moveHealthy();
+					move();
+					ctx.clearRect(0, 0, canvas.width, canvas.height);
+					draw(model.all);
 				}
-				ctx.clearRect(0, 0, canvas.width, canvas.height);
-				draw(model.all);
 				if (DEBUG) {
 					drawFramerate();
 					drawFps();
@@ -90,22 +89,38 @@
 			requestAnimationFrame(tick);
 
 			// ==movement==
-			function moveSick() {
-				var i;
+			function move() {
+				var i, posMap = {}, posHash, sick, healthy;
 				for (i in model.sick) {
-					moveRandom(model.sick[i]);
-					wrap(model.sick[i]);
+					sick = model.sick[i];
+					moveRandom(sick);
+					wrap(sick);
+					posHash = getPosHash(sick);
+					if (posMap[posHash]) { //collision
+						sick.x = sick.oldX;
+						sick.y = sick.oldY;
+					} else {
+						posMap[posHash] = sick;
+					}
 				}
-			}
-			function moveHealthy() {
-				var i;
 				for (i in model.healthy) {
-					moveRandom(model.healthy[i]);
-					wrap(model.healthy[i]);
+					healthy = model.healthy[i];
+					moveRandom(healthy);
+					wrap(healthy);
+					posHash = getPosHash(healthy);
+					if (posMap[posHash]) { //collision
+						healthy.x = healthy.oldX;
+						healthy.y = healthy.oldY;
+						
+					} else {
+						posMap[posHash] = healthy[i];
+					}
 				}
 			}
 			function moveRandom(actor) {
 				var entropy = Math.random();
+				actor.oldX = actor.x;
+				actor.oldY = actor.y;
 				if (entropy > .5) {
 					actor.x++;
 				} else {
@@ -178,6 +193,9 @@
 					x: Math.floor(Math.random() * model.width),
 					y: Math.floor(Math.random() * model.height)
 				};
+			}
+			function getPosHash(actor) {
+				return actor.x * model.width + actor.y;
 			}
 		</script>
 	</body>
