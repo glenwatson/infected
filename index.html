@@ -51,6 +51,27 @@
 					return false;
 				};
 			}
+			if (!Array.prototype.shuffle) {
+				Array.prototype.shuffle = function() {
+					var counter = this.length, temp, index;
+
+					// While there are elements in the array
+					while (counter > 0) {
+						// Pick a random index
+						index = Math.floor(Math.random() * counter);
+
+						// Decrease counter by 1
+						counter--;
+
+						// And swap the last element with it
+						temp = this[counter];
+						this[counter] = this[index];
+						this[index] = temp;
+					}
+
+					return this;
+				}
+			}
 			// ==set-up==
 			// =settings=
 			var ANIMATION_FRAME = false;
@@ -216,7 +237,7 @@
 				//move sick
 				for (i in model.sick) {
 					sick = model.sick[i];
-					if (Math.random() < .3) {
+					if (Math.random() < .1) {
 						moveTowards(sick, model.healthy, posMap);
 						wrap(sick);
 					}
@@ -232,11 +253,11 @@
 				for (i in model.healthy) {
 					healthy = model.healthy[i];
 					if (healthy.state === 0) { //calm
-						if (Math.random() < .1) {
+						if (Math.random() < .05) {
 							moveRandom(healthy);
 						}
 					} else if (healthy.state === 1) { //panicked
-						moveRandom(healthy);
+						avoid(healthy, model.sick, posMap);
 					} else if (healthy.state >= 2) { //hysterical
 						moveRandom(healthy);
 					}
@@ -305,6 +326,27 @@
 						actor.x = actor.oldX;
 					}
 				}
+			}
+			function avoid(actor, targets, posMap) {
+				actor.oldX = actor.x;
+				actor.oldY = actor.y;
+				var openSpace = findOpenSpaceAround(actor, posMap);
+	
+				//move into space (or not at all)
+				actor.x += openSpace.x;
+				actor.y += openSpace.y;
+			}
+			function findOpenSpaceAround(actor, posMap) {
+				var x, y, directions = [-1, 0, 1].shuffle();
+				//find unoccupied space
+				for (var x=0; x<directions.length; x++) {
+					for (var y=0; y<directions.length; y++) {
+						if (!posMap[model.getPosHash(actor.x+directions[x], actor.y+directions[y])]) {
+							return {x: directions[x], y: directions[y]};
+						}
+					}
+				}
+				return {x: 0, y: 0};
 			}
 			function moveRandom(actor) {
 				var entropy = Math.random();
