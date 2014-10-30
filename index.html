@@ -29,9 +29,10 @@
 			var SPEED = 1; // only used if ANIMATION_FRAME == false
 			var PAUSED = false;
 			var DEBUG = true;
-			var MODE;
+			var MODE = 0;
 			var NUM_SICK = 1;
 			var NUM_HEALTHY = 100;
+			var PIXES_PER_CELL = 10;
 			// =template methods=
 			var noop = function (){};
 
@@ -48,21 +49,26 @@
 			staticCtx.font = "8pt Arial";
 			staticCtx.textAlign = "end";
 			
+			var model = {
+				width: Math.round(canvas.width / PIXES_PER_CELL),
+				height: Math.round(canvas.height / PIXES_PER_CELL),
+				all: [],
+				sick: [],
+				healthy: [],
+				obstacles: [],
+			};
 			// ==populate==
-			var all = [];
-			var sick = [];
-			var healthy = [];
 			for (var i=0; i<NUM_SICK; i++) {
 				var s = randomPos();
 				s.type = 'sick';
-				sick.push(s);
-				all.push(s);
+				model.sick.push(s);
+				model.all.push(s);
 			}
 			for (var i=0; i<NUM_HEALTHY; i++) {
 				var h = randomPos();
 				h.type = 'healthy';
-				healthy.push(h);
-				all.push(h);
+				model.healthy.push(h);
+				model.all.push(h);
 			}
 
 			// ==callback==
@@ -72,7 +78,7 @@
 					moveHealthy();
 				}
 				ctx.clearRect(0, 0, canvas.width, canvas.height);
-				draw(all);
+				draw(model.all);
 				if (DEBUG) {
 					drawFramerate();
 					drawFps();
@@ -86,16 +92,16 @@
 			// ==movement==
 			function moveSick() {
 				var i;
-				for (i in sick) {
-					moveRandom(sick[i]);
-					wrap(sick[i]);
+				for (i in model.sick) {
+					moveRandom(model.sick[i]);
+					wrap(model.sick[i]);
 				}
 			}
 			function moveHealthy() {
 				var i;
-				for (i in healthy) {
-					moveRandom(healthy[i]);
-					wrap(healthy[i]);
+				for (i in model.healthy) {
+					moveRandom(model.healthy[i]);
+					wrap(model.healthy[i]);
 				}
 			}
 			function moveRandom(actor) {
@@ -113,15 +119,15 @@
 			}
 			function wrap(actor) {
 				if (actor.x < 0) {
-					actor.x = canvas.width;
+					actor.x = model.width;
 				}
-				if (actor.x > canvas.width) {
+				if (actor.x > model.width) {
 					actor.x = 0;
 				}
 				if (actor.y < 0) {
-					actor.y = canvas.height;
+					actor.y = model.height;
 				}
-				if (actor.y > canvas.height) {
+				if (actor.y > model.height) {
 					actor.y = 0;
 				}
 			}
@@ -164,13 +170,13 @@
 							ctx.fillStyle = '#777777';
 						break;
 					}
-					ctx.fillRect(actor.x, actor.y, 10, 10);
+					ctx.fillRect(actor.x * PIXES_PER_CELL, actor.y * PIXES_PER_CELL, PIXES_PER_CELL, PIXES_PER_CELL);
 				}
 			}
 			function randomPos() {
 				return {
-					x: Math.random() * canvas.width,
-					y: Math.random() * canvas.height,
+					x: Math.floor(Math.random() * model.width),
+					y: Math.floor(Math.random() * model.height)
 				};
 			}
 		</script>
