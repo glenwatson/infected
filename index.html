@@ -67,7 +67,7 @@
 			// ==populate==
 			model.obstacles.push({x: 3, y: 3, w: 10, h: 10});
 			model.obstacles.push({x: 20, y: 10, w: 20, h: 10});
-			model.obstacles.push({x: 50, y: 2, w: 8, h: 20});
+			model.obstacles.push({x: 50, y: 2, w: 8, h: 12});
 			//build the position hash that will never change
 			var staticPosHash = {};
 			for (var i in model.obstacles) {
@@ -98,7 +98,7 @@
 				h.type = 'healthy';
 				model.healthy.push(h);
 			}
-			
+
 			// ==events==
 			// =mouse clicks=
 			;(function () {
@@ -184,8 +184,10 @@
 				//move sick
 				for (i in model.sick) {
 					sick = model.sick[i];
-					moveRandom(sick);
-					wrap(sick);
+					if (Math.random() < .5) {
+						moveTowards(sick, model.healthy, posMap);
+						wrap(sick);
+					}
 					posHash = model.getPosHash(sick);
 					if (posMap[posHash]) { //collision
 						sick.x = sick.oldX;
@@ -212,6 +214,51 @@
 						
 					} else {
 						posMap[posHash] = healthy;
+					}
+				}
+			}
+			function moveTowards(actor, targets, posMap) {
+				actor.oldX = actor.x;
+				actor.oldY = actor.y;
+				//find closest target
+				var closestTarget = null;
+				var closestDist = Infinity;
+				for (var i in targets) {
+					var d = dist(targets[i], actor);
+					if (d < closestDist) {
+						closestDist = d;
+						closestTarget = targets[i];
+					}
+				}
+				// if no target, move random
+				if (closestTarget === null) {
+					moveRandom(actor);
+					return;
+				}
+				//move towards target
+				if (actor.x - closestTarget.x !== 0) {
+					if (actor.x - closestTarget.x < 0) {
+						actor.x++;
+					} else {
+						actor.x--;
+					}
+				}
+				if (actor.y - closestTarget.y !== 0) {
+					if (actor.y - closestTarget.y < 0) {
+						actor.y++;
+					} else {
+						actor.y--;
+					}
+				}
+				//check for obstacle
+				if (posMap[model.getPosHash(actor)]) { //blocked
+					//try to move X only
+					var y = actor.y;
+					actor.y = actor.oldY;
+					if (posMap[model.getPosHash(actor)]) { //still blocked
+						//try to move Y only
+						actor.y = y;
+						actor.x = actor.oldX;
 					}
 				}
 			}
