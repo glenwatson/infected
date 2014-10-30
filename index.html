@@ -23,6 +23,34 @@
 		<canvas id="static">No canvas support</canvas>
 		<canvas id="field"></canvas>
 		<script>
+			// ==polyfills==
+			// Date.now()
+			if (!Date.now) {
+				Date.now = function now() {
+					return new Date().getTime();
+				};
+			}
+			// Array.some()
+			if (!Array.prototype.some) {
+				Array.prototype.some = function(fun /*, thisArg*/) {
+					'use strict';
+					if (this == null) {
+						throw new TypeError('Array.prototype.some called on null or undefined');
+					}
+					if (typeof fun !== 'function') {
+						throw new TypeError();
+					}
+					var t = Object(this);
+					var len = t.length >>> 0;
+					var thisArg = arguments.length >= 2 ? arguments[1] : void 0;
+					for (var i = 0; i < len; i++) {
+						if (i in t && fun.call(thisArg, t[i], i, t)) {
+							return true;
+						}
+					}
+					return false;
+				};
+			}
 			// ==set-up==
 			// =settings=
 			var ANIMATION_FRAME = false;
@@ -99,6 +127,7 @@
 					h = randomPos();
 				}
 				h.type = 'healthy';
+				h.state = 0; //calm => panicked => hysterical
 				model.healthy.push(h);
 			}
 
@@ -187,7 +216,7 @@
 				//move sick
 				for (i in model.sick) {
 					sick = model.sick[i];
-					if (Math.random() < .5) {
+					if (Math.random() < .3) {
 						moveTowards(sick, model.healthy, posMap);
 						wrap(sick);
 					}
@@ -202,7 +231,15 @@
 				//move healthy
 				for (i in model.healthy) {
 					healthy = model.healthy[i];
-					moveRandom(healthy);
+					if (healthy.state === 0) { //calm
+						if (Math.random() < .1) {
+							moveRandom(healthy);
+						}
+					} else if (healthy.state === 1) { //panicked
+						moveRandom(healthy);
+					} else if (healthy.state >= 2) { //hysterical
+						moveRandom(healthy);
+					}
 					wrap(healthy);
 					posHash = model.getPosHashActor(healthy);
 					if (posMap[posHash]) { //collision
@@ -217,6 +254,10 @@
 						
 					} else {
 						posMap[posHash] = healthy;
+						// Are they near an infected?
+						if (model.sick.some(function(s) {return inRange(s, healthy);})) {
+							healthy.state++;
+						}
 					}
 				}
 			}
