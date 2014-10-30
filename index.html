@@ -100,7 +100,41 @@
 				model.all.push(h);
 			}
 			
-			
+			// ==events==
+			// =mouse clicks=
+			;(function () {
+				var mouseDownPoint = {x:0, y:0};
+				var mouseDownForce = null;
+				var dragOffset = {x:0, y:0};
+				function onmove(e) {
+					var mouseMovePoint = {x: e.clientX, y: e.clientY};
+					console.log('onmove');
+				}
+				canvas.onmousedown = function (e) {
+					if (e.which == 1) {
+						mouseDownPoint = {x: e.clientX, y: e.clientY};
+						canvas.onmousemove = onmove;
+						console.log('onmousedown');
+					}
+				};
+				canvas.onmouseup = function (e) {
+					if (e.which == 1) {
+						var mouseUpPoint = {x: e.clientX, y: e.clientY};
+						canvas.onmousemove = null;
+						console.log('onmouseup');
+					}
+				};
+				
+				// =keyboard events=
+				document.onkeyup = function (e) {
+					e = e || window.event;
+					switch (e.charCode || e.keyCode || e.key) {
+						default:
+							console.log(e.charCode || e.keyCode || e.key);
+							break;
+					}
+				};
+			})();
 			
 			
 			drawBG(staticCtx);
