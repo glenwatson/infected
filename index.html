@@ -20,15 +20,15 @@
 		</style>
 	</head>
 	<body>
-		<canvas id="field">No canvas support</canvas>
-		<canvas id="static"></canvas>
+		<canvas id="static">No canvas support</canvas>
+		<canvas id="field"></canvas>
 		<script>
 			// ==set-up==
 			// =settings=
 			var ANIMATION_FRAME = false;
-			var SPEED = 50; // only used if ANIMATION_FRAME !== true
+			var SPEED = 150; // only used if ANIMATION_FRAME !== true
 			var PAUSED = false;
-			var DEBUG = true;
+			var DEBUG = false;
 			var MODE = 0;
 			var NUM_SICK = 1;
 			var NUM_HEALTHY = 100;
@@ -41,6 +41,7 @@
 			canvas.width = document.body.clientWidth;
 			canvas.height = document.body.clientHeight;
 			var ctx = canvas.getContext('2d');
+			ctx.font = '8pt Arial';
 			
 			var staticCanvas = document.getElementById('static');
 			staticCanvas.width = canvas.width;
@@ -57,22 +58,52 @@
 				obstacles: [],
 				ratio: function() {
  					return this.sick.length+':'+this.healthy.length;
-				}
+				},
+				getPosHash: function(a) {
+					return a.x * this.height + a.y;
+				},
 			};
 			// ==populate==
+			model.obstacles.push({x: 3, y: 3, w: 10, h: 10});
+			model.obstacles.push({x: 20, y: 10, w: 20, h: 10});
+			model.obstacles.push({x: 50, y: 2, w: 8, h: 20});
+			//build the position hash that will never change
+			var staticPosHash = {};
+			for (var i in model.obstacles) {
+				var obstacle = model.obstacles[i];
+				for (x = obstacle.x; x < obstacle.x+obstacle.w; x++) {
+					for (y = obstacle.y; y < obstacle.y+obstacle.h; y++) {
+						staticPosHash[model.getPosHash({'x':x, 'y':y})] = true;
+					}
+				}
+			}
+			//populate sick
 			for (var i=0; i<NUM_SICK; i++) {
 				var s = randomPos();
+				//keep trying until we aren't inside an obstacle
+				while (staticPosHash[model.getPosHash(s)]) {
+					s = randomPos();
+				}
 				s.type = 'sick';
 				model.sick.push(s);
 				model.all.push(s);
 			}
+			//populate healthy
 			for (var i=0; i<NUM_HEALTHY; i++) {
 				var h = randomPos();
+				//keep trying until we aren't inside an obstacle
+				while (staticPosHash[model.getPosHash(h)]) {
+					h = randomPos();
+				}
 				h.type = 'healthy';
 				model.healthy.push(h);
 				model.all.push(h);
 			}
-
+			
+			
+			
+			
+			drawBG(staticCtx);
 			// ==callback==
 			function tick() {
 				if (!PAUSED) {
@@ -83,6 +114,7 @@
 				if (DEBUG) {
 					drawFramerate();
 					drawFps();
+					drawHashPos();
 				}
 				if (ANIMATION_FRAME) {
 					requestAnimationFrame(tick);
@@ -92,16 +124,22 @@
 
 			// ==movement==
 			function move() {
-				var i, 
+				var i, x, y,
 					posMap = {}, //location sensitve hash map of all actors
-					posHash, 
+					posHash,
+					obstacle,
 					sick, 
 					healthy;
+				//copy the staticPosHash
+				for (i in staticPosHash) {
+					posMap[i] = true;
+				}
+				//move sick
 				for (i in model.sick) {
 					sick = model.sick[i];
 					moveRandom(sick);
 					wrap(sick);
-					posHash = getPosHash(sick);
+					posHash = model.getPosHash(sick);
 					if (posMap[posHash]) { //collision
 						sick.x = sick.oldX;
 						sick.y = sick.oldY;
@@ -109,11 +147,12 @@
 						posMap[posHash] = sick;
 					}
 				}
+				//move healthy
 				for (i in model.healthy) {
 					healthy = model.healthy[i];
 					moveRandom(healthy);
 					wrap(healthy);
-					posHash = getPosHash(healthy);
+					posHash = model.getPosHash(healthy);
 					if (posMap[posHash]) { //collision
 						if (posMap[posHash].type === 'sick') {
 							//infected
@@ -203,14 +242,25 @@
 				ctx.fillStyle = '#000000';
 				ctx.fillText(model.ratio(), 1, 9);
 			}
+			function drawHashPos() {
+				for (var w=0; w<model.width; w++) {
+					for (var h=0; h<model.height; h++) {
+						ctx.fillText(model.getPosHash({x:w, y:h}), w*PIXES_PER_CELL, h*PIXES_PER_CELL+8);
+					}
+				}
+			}
+			function drawBG(context) {
+				context.fillStyle = '#bbbbbb';
+				for (var i in model.obstacles) {
+					var o = model.obstacles[i];
+					context.fillRect(o.x * PIXES_PER_CELL, o.y * PIXES_PER_CELL, o.w * PIXES_PER_CELL, o.h * PIXES_PER_CELL);
+				}
+			}
 			function randomPos() {
 				return {
 					x: Math.floor(Math.random() * model.width),
 					y: Math.floor(Math.random() * model.height)
 				};
-			}
-			function getPosHash(actor) {
-				return actor.x * model.width + actor.y;
 			}
 			//	=start=
 			;(function () {
