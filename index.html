@@ -79,8 +79,8 @@
 			var PAUSED = false;
 			var DEBUG = false;
 			var MODE = 0;
-			var NUM_SICK = 3;
-			var NUM_HEALTHY = 100;
+			var SICK_DENSITY = .005;
+			var HEALTHY_DENSITY = .1;
 			var PIXELS_PER_CELL = 30;
 			// =template methods=
 			var noop = function (){};
@@ -116,6 +116,7 @@
 					return x * this.height + y;
 				},
 			};
+			var openSpaces = model.width * model.height;
 			// ==populate==
 			model.obstacles.push({x: 3, y: 3, w: 10, h: 10});
 			model.obstacles.push({x: 20, y: 10, w: 20, h: 10});
@@ -127,12 +128,13 @@
 				for (x = obstacle.x; x < obstacle.x+obstacle.w; x++) {
 					for (y = obstacle.y; y < obstacle.y+obstacle.h; y++) {
 						staticPosHash[model.getPosHashActor({'x':x, 'y':y})] = true;
+						openSpaces--;
 					}
 				}
 			}
 			
 			//populate sick
-			for (var i=0; i<NUM_SICK; i++) {
+			for (var i=0; i<openSpaces*SICK_DENSITY; i++) {
 				var s = randomPos();
 				//keep trying until we aren't inside an obstacle
 				while (staticPosHash[model.getPosHashActor(s)]) {
@@ -142,7 +144,7 @@
 				model.sick.push(s);
 			}
 			//populate healthy
-			for (var i=0; i<NUM_HEALTHY; i++) {
+			for (var i=0; i<openSpaces*HEALTHY_DENSITY; i++) {
 				var h = randomPos();
 				//keep trying until we aren't inside an obstacle
 				while (staticPosHash[model.getPosHashActor(h)]) {
