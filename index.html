@@ -118,9 +118,13 @@
 			};
 			var openSpaces = model.width * model.height;
 			// ==populate==
-			model.obstacles.push({x: 3, y: 3, w: 10, h: 10});
-			model.obstacles.push({x: 20, y: 10, w: 20, h: 10});
-			model.obstacles.push({x: 50, y: 2, w: 8, h: 12});
+			//populate obstacles
+			model.obstacles.push({x: Math.floor(model.width * .1), y: Math.floor(model.height * .1),
+					w: Math.floor(model.width * .1), h: Math.floor(model.height * .6)});
+			model.obstacles.push({x: Math.floor(model.width * .3), y: Math.floor(model.height * .5),
+					w: Math.floor(model.width * .4), h: Math.floor(model.height * .3)});
+			model.obstacles.push({x: Math.floor(model.width * .8), y: Math.floor(model.height * .2),
+					w: Math.floor(model.width * .1), h: Math.floor(model.height * .5)});
 			//build the position hash that will never change
 			var staticPosHash = {};
 			for (var i in model.obstacles) {
