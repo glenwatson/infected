@@ -151,12 +151,11 @@
 					h = randomPos();
 				}
 				h.type = 'healthy';
-				h.state = 0; //calm => panicked => hysterical
 				model.healthy.push(h);
 			}
 			
 //model.sick.push({x:25, y:8, type:'sick'});
-//model.healthy.push({x:20, y:9, type:'healthy', state:0});
+//model.healthy.push({x:20, y:9, type:'healthy'});
 			// ==events==
 			// =mouse clicks=
 			;(function () {
@@ -261,15 +260,8 @@
 				var i = model.healthy.length;
 				while(i--) {
 					healthy = model.healthy[i];
-					if (healthy.state === 0) { //calm
-						if (Math.random() < .05) {
-							moveRandom(healthy);
-						}
-					} else if (healthy.state === 1) { //panicked
-						//runAwayFrom(healthy, healthy.seenAt, posMap);
-						avoid(healthy, model.sick, posMap);
-					} else if (healthy.state >= 2) { //hysterical
-						avoid(healthy, model.sick, posMap);
+					if (Math.random() < .05) {
+						moveRandom(healthy);
 					}
 					wrap(healthy);
 					posHash = model.getPosHashActor(healthy);
@@ -277,26 +269,12 @@
 						if (posMap[posHash].type === 'sick') { //infected
 							healthy.type = 'sick';
 							model.sick.push(model.healthy.splice(i, 1)[0]);
-							console.log('infected! '+model.ratio());
 						}
 						healthy.x = healthy.oldX;
 						healthy.y = healthy.oldY;
 						
 					} else {
 						posMap[posHash] = healthy;
-						// Are they near an infected?
-						var closeByInfected = model.sick.filter(function(s) {return inRange(s, healthy, 1);});
-						if (closeByInfected.length > 0) {
-							healthy.state++;
-							//start running
-							healthy.seenAt = positionRelativeTo(healthy, closeByInfected[0]);
-						}
-					}
-					//spread the fear
-					if (healthy.state > 0) {
-						model.healthy
-							.filter(function(h) {return h.state <= 0 && inRange(h, healthy, 1);})
-							.forEach(function(h) { h.state = 1; h.seenAt = healthy.seenAt });
 					}
 				}
 			}
