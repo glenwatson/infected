@@ -79,9 +79,9 @@
 			var PAUSED = false;
 			var DEBUG = false;
 			var MODE = 0;
-			var SICK_DENSITY = .005;
+			var SICK_DENSITY = .001;
 			var HEALTHY_DENSITY = .1;
-			var PIXELS_PER_CELL = 30;
+			var PIXELS_PER_CELL = 5;
 			// =template methods=
 			var noop = function (){};
 
@@ -170,12 +170,12 @@
 						mouseDownPoint = {x: Math.floor(e.clientX / PIXELS_PER_CELL), y: Math.floor(e.clientY / PIXELS_PER_CELL)};
 						canvas.onmousemove = onmove;
 						//remove sick
-						model.sick = model.sick.filter(function(x){ return !inRange(mouseDownPoint, x, 1);});
+						model.sick = model.sick.filter(function(x){ return !inRange(mouseDownPoint, x,  PIXELS_PER_CELL * .3 + 5);});
 						//remove healthy
-						model.healthy = model.healthy.filter(function(x){ return !inRange(mouseDownPoint, x, 1);});
+						model.healthy = model.healthy.filter(function(x){ return !inRange(mouseDownPoint, x, PIXELS_PER_CELL * .3 + 5);});
 						staticCtx.fillStyle = '#dddddd';
 						staticCtx.beginPath();
-						staticCtx.arc(e.clientX, e.clientY, PIXELS_PER_CELL, 0, Math.PI*2, true);
+						staticCtx.arc(e.clientX, e.clientY, PIXELS_PER_CELL * PIXELS_PER_CELL + 5, 0, Math.PI*2, true);
 						staticCtx.fill();
 						staticCtx.closePath();
 					}
@@ -242,7 +242,8 @@
 					posMap[i] = true;
 				}
 				//move sick
-				for (i in model.sick) {
+				var i = model.sick.length;
+				while(i--) {
 					sick = model.sick[i];
 					if (Math.random() < .1) {
 						moveTowards(sick, model.healthy, posMap);
@@ -257,7 +258,7 @@
 					}
 				}
 				//move healthy
-				var i = model.healthy.length;
+				i = model.healthy.length;
 				while(i--) {
 					healthy = model.healthy[i];
 					if (Math.random() < .05) {
