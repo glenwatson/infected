@@ -51,6 +51,7 @@
 					return false;
 				};
 			}
+			// Array.shuffle()
 			if (!Array.prototype.shuffle) {
 				Array.prototype.shuffle = function() {
 					var counter = this.length, temp, index;
@@ -72,10 +73,28 @@
 					return this;
 				}
 			}
+			// Object.create()
+			if (typeof Object.create != 'function') {
+				Object.create = (function() {
+					var Object = function() {};
+					return function (prototype) {
+						if (arguments.length > 1) {
+							throw Error('Second argument not supported');
+						}
+						if (typeof prototype != 'object') {
+							throw TypeError('Argument must be an object');
+						}
+						Object.prototype = prototype;
+						var result = new Object();
+						Object.prototype = null;
+						return result;
+					};
+				})();
+			}
 			// ==set-up==
 			// =settings=
 			var ANIMATION_FRAME = false;
-			var SPEED = 100; // only used if ANIMATION_FRAME !== true
+			var SPEED = 1; // only used if ANIMATION_FRAME !== true
 			var PAUSED = false;
 			var DEBUG = false;
 			var MODE = 0;
@@ -218,8 +237,9 @@
 				if (!PAUSED) {
 					move();
 					ctx.clearRect(0, 0, canvas.width, canvas.height);
-					draw(model.sick);
-					draw(model.healthy);
+					drawSick(model.sick);
+					drawHealthy(model.healthy);
+					drawRatio();
 				}
 				if (DEBUG) {
 					drawFramerate();
@@ -236,17 +256,19 @@
 			// ==movement==
 			function move() {
 				var i, x, y,
-					posMap = {}, //location sensitve hash map of all actors
+					posMap = {}, //location sensitive hash map of all blockers
 					posHash,
 					obstacle,
 					sick, 
 					healthy;
 				//copy the staticPosHash
-				for (i in staticPosHash) {
-					posMap[i] = true;
-				}
+				//for (i in staticPosHash) {
+				//	posMap[i] = true;
+				//}
+				posMap = Object.create(staticPosHash);
+				
 				//move sick
-				var i = model.sick.length;
+				i = model.sick.length;
 				while(i--) {
 					sick = model.sick[i];
 					if (Math.random() < .1) {
@@ -289,7 +311,7 @@
 				//find closest target
 				var closestTarget = null;
 				var closestDist = Infinity;
-				for (var i in targets) {
+				for (var i=0; i<targets.length; i++) {
 					var d = dist(targets[i], actor);
 					if (d < closestDist) {
 						closestDist = d;
@@ -317,7 +339,7 @@
 						direction.y = -1;
 					}
 				}
-				tryMove2(actor, direction, posMap);
+				tryMove2(actor, posMap, direction);
 			}
 			function avoid(actor, targets, posMap) {
 				actor.oldX = actor.x;
@@ -328,13 +350,14 @@
 				actor.x += openSpace.x;
 				actor.y += openSpace.y;
 			}
-
 			function runAwayFrom(actor, target, posMap) {
 				actor.oldX = actor.x;
 				actor.oldY = actor.y;
-				tryMove2(actor, {x: -target.x, y:-target.y}, posMap);
+				tryMove2(actor, posMap, {x: -target.x, y: -target.y});
 			}
-			function tryMove(actor, posMap) {
+			function tryMove(actor, posMap, direction) {
+				actor.x += direction.x;
+				actor.y += direction.y;
 				//check for obstacle
 				if (posMap[model.getPosHashActor(actor)]) { //blocked
 					//try to move X only
@@ -347,7 +370,7 @@
 					}
 				}
 			}
-			function tryMove2(actor, direction, posMap) {
+			function tryMove2(actor, posMap, direction) {
 				//check for obstacle
 				if (!posMap[model.getPosHash(actor.x+direction.x, actor.y+direction.y)]) { //not blocked
 					actor.x += direction.x;
@@ -355,18 +378,18 @@
 					return;
 				}
 				//try to move X only
-				if (!posMap[model.getPosHash(actor.x+direction.x, actor.y+direction.y)]) { //not blocked
+				else if (!posMap[model.getPosHash(actor.x+direction.x, actor.y)]) { //not blocked
 					actor.x += direction.x;
-					actor.y += direction.y;
+					actor.y += 0;
 					return;
 				}
 				//try to move Y only
-				if (!posMap[model.getPosHash(actor.x+direction.x, actor.y+direction.y)]) { //not blocked
-					actor.x += direction.x;
+				else if (!posMap[model.getPosHash(actor.x, actor.y+direction.y)]) { //not blocked
+					actor.x += 0;
 					actor.y += direction.y;
 					return;
 				}
-				if (direction.y === 0) {
+				else if (direction.y === 0) {
 					// try to move diagonally
 					if (!posMap[model.getPosHash(actor.x+direction.x, actor.y+1)]) { //not blocked
 						actor.x += direction.x;
@@ -374,25 +397,25 @@
 						return;
 					}
 					// try to move diagonally
-					if (!posMap[model.getPosHash(actor.x+direction.x, actor.y-1)]) { //not blocked
+					else if (!posMap[model.getPosHash(actor.x+direction.x, actor.y-1)]) { //not blocked
 						actor.x += direction.x;
 						actor.y += -1;
 						return;
 					}
 					// try to move sideways
-					if (!posMap[model.getPosHash(actor.x, actor.y+1)]) { //not blocked
+					else if (!posMap[model.getPosHash(actor.x, actor.y+1)]) { //not blocked
 						actor.x += 0;
 						actor.y += 1;
 						return;
 					}
 					// try to move sideways
-					if (!posMap[model.getPosHash(actor.x, actor.y-1)]) { //not blocked
+					else if (!posMap[model.getPosHash(actor.x, actor.y-1)]) { //not blocked
 						actor.x += 0;
 						actor.y += -1;
 						return;
 					}
 				}
-				if (direction.x === 0) {
+				else if (direction.x === 0) {
 					// try to move diagonally
 					if (!posMap[model.getPosHash(actor.x+1, actor.y+direction.y)]) { //not blocked
 						actor.x += 1;
@@ -400,19 +423,19 @@
 						return;
 					}
 					// try to move diagonally
-					if (!posMap[model.getPosHash(actor.x-1, actor.y+direction.y)]) { //not blocked
+					else if (!posMap[model.getPosHash(actor.x-1, actor.y+direction.y)]) { //not blocked
 						actor.x += -1;
 						actor.y += direction.y;
 						return;
 					}
 					// try to move sideways
-					if (!posMap[model.getPosHash(actor.x+1, actor.y)]) { //not blocked
+					else if (!posMap[model.getPosHash(actor.x+1, actor.y)]) { //not blocked
 						actor.x += 1;
 						actor.y += 0;
 						return;
 					}
 					// try to move sideways
-					if (!posMap[model.getPosHash(actor.x-1, actor.y)]) { //not blocked
+					else if (!posMap[model.getPosHash(actor.x-1, actor.y)]) { //not blocked
 						actor.x += -1;
 						actor.y += 0;
 						return;
@@ -490,21 +513,24 @@
 			})();
 			
 			// ==draw==
-			function draw(actors) {
+			function drawSick(sick) {
 				var actor, i;
-				for (i in actors) {
-					actor = actors[i];
-					switch(actor.type) {
-						case 'sick':
-							ctx.fillStyle = '#33cc33';
-						break;
-						case 'healthy':
-							ctx.fillStyle = '#777777';
-						break;
-					}
+				ctx.fillStyle = '#33cc33';
+				for (i=0; i<sick.length; i++) {
+					actor = sick[i];
 					ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
 				}
-				//draw infected to health ratio
+			}
+			function drawHealthy(healthy) {
+				var actor, i;
+				ctx.fillStyle = '#777777';
+				for (i=0; i<healthy.length; i++) {
+					actor = healthy[i];
+					ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
+				}
+			}
+			function drawRatio() {
+					//draw infected to health ratio
 				ctx.fillStyle = '#000000';
 				ctx.fillText(model.ratio(), 1, 9);
 			}
