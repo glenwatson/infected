@@ -138,12 +138,27 @@
 			var openSpaces = model.width * model.height;
 			// ==populate==
 			//populate obstacles
+			/* 3 boxes */
 			model.obstacles.push({x: Math.floor(model.width * .1), y: Math.floor(model.height * .1),
 					w: Math.floor(model.width * .1), h: Math.floor(model.height * .6)});
 			model.obstacles.push({x: Math.floor(model.width * .3), y: Math.floor(model.height * .5),
 					w: Math.floor(model.width * .4), h: Math.floor(model.height * .3)});
 			model.obstacles.push({x: Math.floor(model.width * .8), y: Math.floor(model.height * .2),
 					w: Math.floor(model.width * .1), h: Math.floor(model.height * .5)});
+			
+			/* fort 
+			model.obstacles.push({x: Math.floor(model.width * .4), y: Math.floor(model.height * .2),
+					w: Math.floor(model.height * .2), h: 5});
+			model.obstacles.push({x: Math.floor(model.width * .5), y: Math.floor(model.height * .2),
+					w: Math.floor(model.height * .3), h: 5});
+			model.obstacles.push({x: Math.floor(model.width * .4), y: Math.floor(model.height * .2),
+					w: 5, h: Math.floor(model.height * .6)});
+			model.obstacles.push({x: Math.floor(model.width * .6), y: Math.floor(model.height * .2),
+					w: 5, h: Math.floor(model.height * .6)});
+			model.obstacles.push({x: Math.floor(model.width * .4), y: Math.floor(model.height * .8)-1,
+					w: Math.floor(model.height * .5), h: 5});
+			*/
+			
 			//build the position hash that will never change
 			var staticPosHash = {};
 			for (var i in model.obstacles) {
