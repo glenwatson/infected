@@ -212,11 +212,12 @@
 						model.sick = model.sick.filter(function(x){ return !inRange(mouseDownPoint, x,  PIXELS_PER_CELL * .3 + 5);});
 						//remove healthy
 						model.healthy = model.healthy.filter(function(x){ return !inRange(mouseDownPoint, x, PIXELS_PER_CELL * .3 + 5);});
-						staticCtx.fillStyle = '#dddddd';
+						staticCtx.fillStyle = '#eeeeee';
 						staticCtx.beginPath();
 						staticCtx.arc(e.clientX, e.clientY, PIXELS_PER_CELL * PIXELS_PER_CELL + 5, 0, Math.PI*2, true);
 						staticCtx.fill();
 						staticCtx.closePath();
+						drawBG(staticCtx);
 					}
 				};
 				canvas.onmouseup = function (e) {
