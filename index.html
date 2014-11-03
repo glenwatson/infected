@@ -272,6 +272,8 @@
 				i = model.sick.length;
 				while(i--) {
 					sick = model.sick[i];
+					sick.oldX = sick.x;
+					sick.oldY = sick.y;
 					if (Math.random() < .1) {
 						moveTowards(sick, model.healthy, posMap);
 						wrap(sick);
@@ -288,6 +290,8 @@
 				i = model.healthy.length;
 				while(i--) {
 					healthy = model.healthy[i];
+					healthy.oldX = healthy.x;
+					healthy.oldY = healthy.y;
 					if (healthy.seen == 0) {
 						if (Math.random() < .05) {
 							moveRandom(healthy);
@@ -325,8 +329,6 @@
 				}
 			}
 			function moveTowards(actor, targets, posMap) {
-				actor.oldX = actor.x;
-				actor.oldY = actor.y;
 				//find closest target
 				var closestTarget = null;
 				var closestDist = Infinity;
@@ -361,8 +363,6 @@
 				tryMove2(actor, posMap, direction);
 			}
 			function avoid(actor, targets, posMap) {
-				actor.oldX = actor.x;
-				actor.oldY = actor.y;
 				var openSpace = findOpenSpaceAround(actor, posMap);
 	
 				//move into space (or not at all)
@@ -370,8 +370,6 @@
 				actor.y += openSpace.y;
 			}
 			function runAwayFrom(actor, target, posMap) {
-				actor.oldX = actor.x;
-				actor.oldY = actor.y;
 				tryMove2(actor, posMap, {x: -target.x, y: -target.y});
 			}
 			function tryMove(actor, posMap, direction) {
@@ -478,8 +476,6 @@
 			}
 			function moveRandom(actor) {
 				var entropy = Math.random();
-				actor.oldX = actor.x;
-				actor.oldY = actor.y;
 				if (entropy > .7) {
 					actor.x++;
 				} else if (entropy < .3) {
