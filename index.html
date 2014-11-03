@@ -98,9 +98,9 @@
 				PAUSED = false,
 				DEBUG = false,
 				MODE = 0,
-				SICK_DENSITY = .001,
+				SICK_DENSITY = .002,
 				HEALTHY_DENSITY = .1,
-				PIXELS_PER_CELL = 20,
+				PIXELS_PER_CELL = 5,
 				AOE_SIZE = 100;
 			// =template methods=
 			var noop = function (){};
@@ -127,7 +127,7 @@
 				obstacles: [],
 				
 				ratio: function() {
- 					return this.sick.length+':'+this.healthy.length;
+ 					return this.healthy.length+':'+this.sick.length;
 				},
 				getPosHashActor: function(a) {
 					return this.getPosHash(a.x, a.y);
