@@ -181,6 +181,8 @@
 				s.type = 'sick';
 				model.sick.push(s);
 			}
+			model.sick[0].type2 = 'mega';
+			
 			//populate healthy
 			for (var i=0; i<openSpaces*HEALTHY_DENSITY; i++) {
 				var h = randomPos();
@@ -290,7 +292,10 @@
 					sick = model.sick[i];
 					sick.oldX = sick.x;
 					sick.oldY = sick.y;
-					if (Math.random() < .1) {
+					if(sick.type2 === 'mega') {
+						moveTowards(sick, model.healthy, posMap);
+						wrap(sick);
+					} else if (Math.random() < .1) {
 						moveTowards(sick, model.healthy, posMap);
 						wrap(sick);
 					}
@@ -309,7 +314,7 @@
 					healthy.oldX = healthy.x;
 					healthy.oldY = healthy.y;
 					if (healthy.fear == 0) { //calm
-						if (Math.random() < .05) {
+						if (Math.random() < .01) {
 							moveRandom(healthy);
 						}
 					} else if (healthy.fear < 128) { //panicked
@@ -562,7 +567,11 @@
 				ctx.fillStyle = '#33cc33';
 				for (i=0; i<sick.length; i++) {
 					actor = sick[i];
-					ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
+					if (actor.type2 == 'mega') {
+						ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL * 2, PIXELS_PER_CELL * 2);
+					} else {
+						ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
+					}
 				}
 			}
 			function drawHealthy(healthy) {
