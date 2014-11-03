@@ -174,12 +174,12 @@
 					h = randomPos();
 				}
 				h.type = 'healthy';
-				h.seen = 0;
+				h.fear = 0;
 				model.healthy.push(h);
 			}
 			
 //model.sick.push({x:25, y:8, type:'sick'});
-//model.healthy.push({x:20, y:9, type:'healthy', seen:0});
+//model.healthy.push({x:20, y:9, type:'healthy', fear:0});
 			// ==events==
 			// =mouse clicks=
 			;(function () {
@@ -292,11 +292,13 @@
 					healthy = model.healthy[i];
 					healthy.oldX = healthy.x;
 					healthy.oldY = healthy.y;
-					if (healthy.seen == 0) {
+					if (healthy.fear == 0) { //calm
 						if (Math.random() < .05) {
 							moveRandom(healthy);
 						}
-					} else {
+					} else if (healthy.fear < 128) { //panicked
+						avoid(healthy, model.sick, posMap);
+					} else { //hysteric
 						moveRandom(healthy);
 					}
 					wrap(healthy);
@@ -311,21 +313,32 @@
 						
 					} else {
 						posMap[posHash] = healthy;
-						increaseSeen(healthy, posMap);
+						increaseFear(healthy, posMap);
 					}
 				}
 			}
-			function increaseSeen(healthy, posMap) {
-				if ( (posMap[model.getPosHash(healthy.x-1, healthy.y-1)] && posMap[model.getPosHash(healthy.x-1, healthy.y-1)].type == 'sick') || 
-					(posMap[model.getPosHash(healthy.x, healthy.y-1)] && posMap[model.getPosHash(healthy.x, healthy.y-1)].type == 'sick') || 
-					(posMap[model.getPosHash(healthy.x+1, healthy.y-1)] && posMap[model.getPosHash(healthy.x+1, healthy.y-1)].type == 'sick') || 
-					(posMap[model.getPosHash(healthy.x-1, healthy.y)] && posMap[model.getPosHash(healthy.x-1, healthy.y)].type == 'sick') || 
-					(posMap[model.getPosHash(healthy.x+1, healthy.y)] && posMap[model.getPosHash(healthy.x+1, healthy.y)].type == 'sick') || 
-					(posMap[model.getPosHash(healthy.x-1, healthy.y+1)] && posMap[model.getPosHash(healthy.x-1, healthy.y+1)].type == 'sick') || 
-					(posMap[model.getPosHash(healthy.x, healthy.y+1)] && posMap[model.getPosHash(healthy.x, healthy.y+1)].type == 'sick') || 
-					(posMap[model.getPosHash(healthy.x, healthy.y+1)] && posMap[model.getPosHash(healthy.x, healthy.y+1)].type == 'sick') ){
-					//increase seen
-					healthy.seen++;
+			function increaseFear(healthy, posMap) {
+				var topLeft = posMap[model.getPosHash(healthy.x-1, healthy.y-1)];
+				var topMid = posMap[model.getPosHash(healthy.x, healthy.y-1)];
+				var topRight = posMap[model.getPosHash(healthy.x+1, healthy.y-1)];
+				var midLeft = posMap[model.getPosHash(healthy.x-1, healthy.y)];
+				var midRight = posMap[model.getPosHash(healthy.x+1, healthy.y)];
+				var botLeft = posMap[model.getPosHash(healthy.x-1, healthy.y+1)];
+				var botMid = posMap[model.getPosHash(healthy.x, healthy.y+1)];
+				var botRight = posMap[model.getPosHash(healthy.x+1, healthy.y+1)];
+				if ((topLeft && (topLeft.type == 'sick' || topLeft.fear > 0)) ||
+					(topMid && (topMid.type == 'sick' || topMid.fear > 0)) ||
+					(topRight && (topRight.type == 'sick' || topRight.fear > 0)) ||
+					(midLeft && (midLeft.type == 'sick' || midLeft.fear > 0)) ||
+					(midRight && (midRight.type == 'sick' || midRight.fear > 0)) ||
+					(botLeft && (botLeft.type == 'sick' || botLeft.fear > 0)) ||
+					(botMid && (botMid.type == 'sick' || botMid.fear > 0)) ||
+					(botRight && (botRight.type == 'sick' || botRight.fear > 0))
+					){
+					//increase fear
+					healthy.fear = Math.min(healthy.fear+10, 1000);
+				} else {
+					healthy.fear = Math.max(healthy.fear-1, 0);
 				}
 			}
 			function moveTowards(actor, targets, posMap) {
