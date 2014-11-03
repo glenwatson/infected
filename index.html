@@ -160,6 +160,13 @@
 					w: Math.floor(model.height * .5), h: 5});
 			*/
 			
+			/* boarders 
+			model.obstacles.push({x: 0, y: 0, w: model.width, h: 1});
+			model.obstacles.push({x: 0, y: 0, w: 1, h: model.height});
+			model.obstacles.push({x: 0, y: model.height-1, w: model.width, h: 1});
+			model.obstacles.push({x: model.width-1, y: 0, w: 1, h: model.height});
+			*/
+			
 			//build the position hash that will never change
 			var staticPosHash = {};
 			for (var i in model.obstacles) {
