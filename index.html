@@ -320,9 +320,14 @@
 					wrap(healthy);
 					posHash = model.getPosHashActor(healthy);
 					if (posMap[posHash]) { //collision
-						if (posMap[posHash].type === 'sick') { //infected
-							healthy.type = 'sick';
-							model.sick.push(model.healthy.splice(i, 1)[0]);
+						if (posMap[posHash].type === 'sick' || posMap[posHash].type === 'bitten') { //infected
+							if (!healthy.bitten) {
+								healthy.type = 'bitten';
+								healthy.bitten = 500;
+							} else { //already bitten, infect
+								healthy.type = 'sick';
+								model.sick.push(model.healthy.splice(i, 1)[0]);
+							}
 						}
 						healthy.x = healthy.oldX;
 						healthy.y = healthy.oldY;
@@ -330,6 +335,13 @@
 					} else {
 						posMap[posHash] = healthy;
 						increaseFear(healthy, posMap);
+					}
+					if (healthy.bitten) {
+						if (healthy.bitten === 1) { //time's up!
+							healthy.type = 'sick';
+							model.sick.push(model.healthy.splice(i, 1)[0]);
+						}
+						healthy.bitten--;
 					}
 				}
 			}
