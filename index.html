@@ -174,11 +174,12 @@
 					h = randomPos();
 				}
 				h.type = 'healthy';
+				h.seen = 0;
 				model.healthy.push(h);
 			}
 			
 //model.sick.push({x:25, y:8, type:'sick'});
-//model.healthy.push({x:20, y:9, type:'healthy'});
+//model.healthy.push({x:20, y:9, type:'healthy', seen:0});
 			// ==events==
 			// =mouse clicks=
 			;(function () {
@@ -287,7 +288,11 @@
 				i = model.healthy.length;
 				while(i--) {
 					healthy = model.healthy[i];
-					if (Math.random() < .05) {
+					if (healthy.seen == 0) {
+						if (Math.random() < .05) {
+							moveRandom(healthy);
+						}
+					} else {
 						moveRandom(healthy);
 					}
 					wrap(healthy);
@@ -302,7 +307,21 @@
 						
 					} else {
 						posMap[posHash] = healthy;
+						increaseSeen(healthy, posMap);
 					}
+				}
+			}
+			function increaseSeen(healthy, posMap) {
+				if ( (posMap[model.getPosHash(healthy.x-1, healthy.y-1)] && posMap[model.getPosHash(healthy.x-1, healthy.y-1)].type == 'sick') || 
+					(posMap[model.getPosHash(healthy.x, healthy.y-1)] && posMap[model.getPosHash(healthy.x, healthy.y-1)].type == 'sick') || 
+					(posMap[model.getPosHash(healthy.x+1, healthy.y-1)] && posMap[model.getPosHash(healthy.x+1, healthy.y-1)].type == 'sick') || 
+					(posMap[model.getPosHash(healthy.x-1, healthy.y)] && posMap[model.getPosHash(healthy.x-1, healthy.y)].type == 'sick') || 
+					(posMap[model.getPosHash(healthy.x+1, healthy.y)] && posMap[model.getPosHash(healthy.x+1, healthy.y)].type == 'sick') || 
+					(posMap[model.getPosHash(healthy.x-1, healthy.y+1)] && posMap[model.getPosHash(healthy.x-1, healthy.y+1)].type == 'sick') || 
+					(posMap[model.getPosHash(healthy.x, healthy.y+1)] && posMap[model.getPosHash(healthy.x, healthy.y+1)].type == 'sick') || 
+					(posMap[model.getPosHash(healthy.x, healthy.y+1)] && posMap[model.getPosHash(healthy.x, healthy.y+1)].type == 'sick') ){
+					//increase seen
+					healthy.seen++;
 				}
 			}
 			function moveTowards(actor, targets, posMap) {
