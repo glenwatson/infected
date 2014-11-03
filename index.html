@@ -93,14 +93,15 @@
 			}
 			// ==set-up==
 			// =settings=
-			var ANIMATION_FRAME = false;
-			var SPEED = 1; // only used if ANIMATION_FRAME !== true
-			var PAUSED = false;
-			var DEBUG = false;
-			var MODE = 0;
-			var SICK_DENSITY = .001;
-			var HEALTHY_DENSITY = .1;
-			var PIXELS_PER_CELL = 5;
+			var ANIMATION_FRAME = false,
+				SPEED = 1, // only used if ANIMATION_FRAME !== true
+				PAUSED = false,
+				DEBUG = false,
+				MODE = 0,
+				SICK_DENSITY = .001,
+				HEALTHY_DENSITY = .1,
+				PIXELS_PER_CELL = 20,
+				AOE_SIZE = 100;
 			// =template methods=
 			var noop = function (){};
 
@@ -209,12 +210,12 @@
 						mouseDownPoint = {x: Math.floor(e.clientX / PIXELS_PER_CELL), y: Math.floor(e.clientY / PIXELS_PER_CELL)};
 						canvas.onmousemove = onmove;
 						//remove sick
-						model.sick = model.sick.filter(function(x){ return !inRange(mouseDownPoint, x,  PIXELS_PER_CELL * .3 + 5);});
+						model.sick = model.sick.filter(function(x){ return !inRange(mouseDownPoint, x, AOE_SIZE/PIXELS_PER_CELL);});
 						//remove healthy
-						model.healthy = model.healthy.filter(function(x){ return !inRange(mouseDownPoint, x, PIXELS_PER_CELL * .3 + 5);});
+						model.healthy = model.healthy.filter(function(x){ return !inRange(mouseDownPoint, x, AOE_SIZE/PIXELS_PER_CELL);});
 						staticCtx.fillStyle = '#eeeeee';
 						staticCtx.beginPath();
-						staticCtx.arc(e.clientX, e.clientY, PIXELS_PER_CELL * PIXELS_PER_CELL + 5, 0, Math.PI*2, true);
+						staticCtx.arc(e.clientX, e.clientY, AOE_SIZE, 0, Math.PI*2, true);
 						staticCtx.fill();
 						staticCtx.closePath();
 						drawBG(staticCtx);
