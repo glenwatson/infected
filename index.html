@@ -34,7 +34,7 @@
 
 			var PIXELS_PER_CELL = 5,
 				ANIMATION_FRAME = false,
-				SPEED = 1, // only used if ANIMATION_FRAME !== true
+				SPEED = 100, // only used if ANIMATION_FRAME !== true
 				PAUSED = false,
 				DEBUG = true,
 				game,
@@ -54,6 +54,7 @@
 			var staticCtx = staticCanvas.getContext('2d');
 			staticCtx.font = '8pt Arial';
 			
+			// =game=
 			game = infected();
 			gameSettings = game.init({
 				width: Math.floor(canvas.width/PIXELS_PER_CELL),
@@ -87,7 +88,14 @@
 				document.onkeyup = function (e) {
 					e = e || window.event;
 					switch (e.charCode || e.keyCode || e.key) {
+						case 68:
+							DEBUG = !DEBUG;
+							break;
+						case 80:
+							PAUSED = !PAUSED;
+							break;
 						default:
+							console.log(e.charCode || e.keyCode || e.key);
 							break;
 					}
 				};
@@ -100,13 +108,13 @@
 					ctx.clearRect(0, 0, canvas.width, canvas.height);
 					drawSick(gameState.sick);
 					drawHealthy(gameState.healthy);
-					drawRatio(gameState);
 				}
 				if (DEBUG) {
 					drawFramerate();
 					drawFps();
 					//drawHashPos();
 					//drawPos();
+					drawRatio(gameState);
 				}
 				if (ANIMATION_FRAME) {
 					requestAnimationFrame(tick);
