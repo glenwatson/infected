@@ -177,20 +177,18 @@ var infected = function() {
 
 	// ==movement==
 	function move() {
-		var i, x, y,
-			posMap = {}, //location sensitive hash map of all blockers
-			posHash,
-			obstacle,
-			sick, 
-			healthy;
-		//copy the staticPosHash
-		//for (i in state.staticPosHash) {
-		//	posMap[i] = true;
-		//}
+		var posMap = {}; //location sensitive hash map of all blockers;
+		//copy existing blockers
 		posMap = Object.create(state.staticPosHash);
-	
 		//move sick
-		i = state.sick.length;
+		moveSick(posMap);
+		//move healthy
+		moveHealthy(posMap);
+	}
+	function moveSick(posMap) {
+		var i = state.sick.length,
+			sick,
+			posHash;
 		while(i--) {
 			sick = state.sick[i];
 			sick.oldX = sick.x;
@@ -207,8 +205,11 @@ var infected = function() {
 				posMap[posHash] = sick;
 			}
 		}
-		//move healthy
-		i = state.healthy.length;
+	}
+	function moveHealthy(posMap) {
+		var i = state.healthy.length,
+			healthy,
+			posHash;
 		while(i--) {
 			healthy = state.healthy[i];
 			healthy.oldX = healthy.x;
