@@ -1,0 +1,197 @@
+<html>
+	<head>
+		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+		<title>Infected!</title>
+		<link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+		<style>
+			html, body {
+				margin: 0;
+				padding: 0;
+			}
+			body {
+				font-family: 'Montserrat', sans-serif;
+				font-size: 22px;
+			}
+			canvas {
+				position: absolute;
+				left: 0;
+				top: 0;
+			}
+		</style>
+	</head>
+	<body>
+		<canvas id="static">No canvas support</canvas>
+		<canvas id="field"></canvas>
+		<script>
+			// ==polyfills==
+			// Date.now()
+			if (!Date.now) {
+				Date.now = function now() {
+					return new Date().getTime();
+				};
+			}
+
+			var PIXELS_PER_CELL = 5,
+				DEBUG = true,
+				AOE_SIZE = 100,
+				aoe = {x: -AOE_SIZE, y: -AOE_SIZE}; //trick into drawing background
+			
+			// =canvas=
+			var canvas = document.getElementById('field');
+			canvas.width = document.body.clientWidth;
+			canvas.height = document.body.clientHeight;
+			var ctx = canvas.getContext('2d');
+			ctx.font = '8pt Arial';
+			
+			var staticCanvas = document.getElementById('static');
+			staticCanvas.width = canvas.width;
+			staticCanvas.height = canvas.height;
+			var staticCtx = staticCanvas.getContext('2d');
+			staticCtx.font = '8pt Arial';
+			
+			// ==events==
+			// =mouse clicks=
+			;(function () {
+				var mouseDownPoint = {x:0, y:0};
+				var mouseDownForce = null;
+				var dragOffset = {x:0, y:0};
+				canvas.onmousedown = function (e) {
+					if (e.which == 1) {
+						mousedown({x: Math.floor(e.clientX/PIXELS_PER_CELL), y: Math.floor(e.clientY/PIXELS_PER_CELL)});
+						aoe = {x: e.clientX, y: e.clientY};
+					}
+				};
+				
+				// =keyboard events=
+				document.onkeyup = function (e) {
+					e = e || window.event;
+					switch (e.charCode || e.keyCode || e.key) {
+						default:
+							break;
+					}
+				};
+			})();
+			
+			// ==callback==
+			function updateCanvas(model) {
+				ctx.clearRect(0, 0, canvas.width, canvas.height);
+				drawSick(model.sick);
+				drawHealthy(model.healthy);
+				drawRatio(model);
+				if (aoe) {
+					staticCtx.fillStyle = '#eeeeee';
+					staticCtx.beginPath();
+					staticCtx.arc(aoe.x, aoe.y, AOE_SIZE, 0, Math.PI*2, true);
+					staticCtx.fill();
+					staticCtx.closePath();
+					aoe = false;
+					drawBG(model);
+				}
+				if (DEBUG) {
+					drawFramerate();
+					drawFps();
+					//drawHashPos();
+					//drawPos();
+				}
+			}
+
+			// =fps=
+			var drawFps = (function () {
+				var fps = 0;
+				var frameCount = 0;
+				setInterval(function () {
+					fps = frameCount;
+					frameCount = 0;
+				}, 1000); //1 second
+				return function () {
+					frameCount++;
+					ctx.fillStyle = '#000000';
+					ctx.fillText(fps+' fps', canvas.width-30, 20);
+				}
+			})();
+			
+			// =framerate=
+			var drawFramerate = (function () {
+				var lastFrame = new Date().getTime();
+				return function () {
+					var thisFrame = new Date().getTime();
+					ctx.fillStyle = '#000000';
+					ctx.fillText((thisFrame - lastFrame) / 1000, canvas.width-30, 10);
+					lastFrame = thisFrame;
+				}
+			})();
+			
+			// ==draw==
+			function drawSick(sick) {
+				var actor, i;
+				ctx.fillStyle = '#33cc33';
+				for (i=0; i<sick.length; i++) {
+					actor = sick[i];
+					ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
+				}
+			}
+			function drawHealthy(healthy) {
+				var actor, i;
+				ctx.fillStyle = '#777777';
+				for (i=0; i<healthy.length; i++) {
+					actor = healthy[i];
+					ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
+				}
+			}
+			function drawRatio(model) {
+				//draw infected to health ratio
+				ctx.fillStyle = '#000000';
+				ctx.fillText(ratio(model), 1, 9);
+			}
+			function ratio(model) {
+				return model.healthy.length+':'+model.sick.length;
+			}
+			function drawHashPos(model) {
+				for (var w=0; w<model.width; w++) {
+					for (var h=0; h<model.height; h++) {
+						ctx.fillText(model.getPosHashActor({x:w, y:h}), w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
+					}
+				}
+			}
+			function drawPos(model) {
+				for (var w=0; w<model.width; w++) {
+					for (var h=0; h<model.height; h++) {
+						ctx.fillText(w+','+h, w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
+					}
+				}
+			}
+			function drawBG(model) {
+				staticCtx.fillStyle = '#bbbbbb';
+				for (var i in model.obstacles) {
+					var o = model.obstacles[i];
+					staticCtx.fillRect(o.x * PIXELS_PER_CELL, o.y * PIXELS_PER_CELL, o.w * PIXELS_PER_CELL, o.h * PIXELS_PER_CELL);
+				}
+			}
+			// ==webworker==
+			var myWorker = new Worker("infected.js");
+			myWorker.onmessage = function(event) {
+				updateCanvas(event.data);
+			};
+			function send(action, data) {
+				data = data || {};
+				data.action = action;
+				myWorker.postMessage(data);
+			}
+			function start() {
+				send('start');
+			}
+			function stop() {
+				send('stop');
+			}
+			function init() {
+				send('init', {width: Math.floor(canvas.width/PIXELS_PER_CELL), height: Math.floor(canvas.height/PIXELS_PER_CELL)});
+			}
+			function mousedown(event) {
+				send('mousedown', event);
+			}
+			//	=start=
+			init();
+			start();
+		</script>
+	</body>
+</html>
