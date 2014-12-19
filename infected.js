@@ -161,11 +161,22 @@ var infected = function() {
 	}
 
 	function dist(pos1, pos2) {
-		return Math.pow(pos1.x - pos2.x, 2) + Math.pow(pos1.y - pos2.y, 2);
+		var xDist = pos1.x - pos2.x,
+			yDist = pos1.y - pos2.y;
+		if (xDist > state.width / 2) {
+			xDist = (state.width - pos1.x) + pos2.x;
+		} else if (xDist < -state.width / 2) {
+			xDist = (state.width - pos2.x) + pos1.x;
+		}
+		if (yDist > state.height / 2) {
+			yDist = (state.height - pos1.x) + pos2.x;
+		} else if (yDist < -state.height / 2) {
+			yDist = (state.height - pos2.x) + pos1.x;
+		}
+		return Math.pow(xDist, 2) + Math.pow(yDist, 2);
 	}
 	function inRange(pos1, pos2, dist) {
 		return Math.abs(pos1.x - pos2.x) <= dist && Math.abs(pos1.y - pos2.y) <= dist;
-		//return dist(pos1, pos2) < 4;
 	}
 	function getPosHashActor(a) {
 		return getPosHash(a.x, a.y);
@@ -282,17 +293,35 @@ var infected = function() {
 		//move towards target
 		var direction = {x:0, y:0};
 		if (actor.x - closestTarget.x !== 0) {
-			if (actor.x - closestTarget.x < 0) {
-				direction.x = 1;
+			var xDist = actor.x - closestTarget.x;
+			if (Math.abs(xDist) < state.width / 2) {
+				if (xDist < 0) {
+					direction.x = 1;
+				} else {
+					direction.x = -1;
+				}
 			} else {
-				direction.x = -1;
+				if (xDist > 0) {
+					direction.x = 1;
+				} else {
+					direction.x = -1;
+				}
 			}
 		}
 		if (actor.y - closestTarget.y !== 0) {
-			if (actor.y - closestTarget.y < 0) {
-				direction.y = 1;
+			var yDist = actor.y - closestTarget.y;
+			if (Math.abs(yDist) < state.height / 2) {
+				if (actor.y - closestTarget.y < 0) {
+					direction.y = 1;
+				} else {
+					direction.y = -1;
+				}
 			} else {
-				direction.y = -1;
+				if (actor.y - closestTarget.y > 0) {
+					direction.y = 1;
+				} else {
+					direction.y = -1;
+				}
 			}
 		}
 		tryMove2(actor, posMap, direction);
