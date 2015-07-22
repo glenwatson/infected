@@ -1,207 +1,207 @@
 <html>
-	<head>
-		<meta content="text/html;charset=utf-8" http-equiv="Content-Type">
-		<title>Infected!</title>
-		<link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
-		<style>
-			html, body {
-				margin: 0;
-				padding: 0;
-			}
-			body {
-				font-family: 'Montserrat', sans-serif;
-				font-size: 22px;
-			}
-			canvas {
-				position: absolute;
-				left: 0;
-				top: 0;
-			}
-		</style>
-	</head>
-	<body>
-		<canvas id="static">No canvas support</canvas>
-		<canvas id="field"></canvas>
-		<script type="text/javascript" src="infected.js" ></script>
-		<script type="text/javascript">
-			// ==polyfills==
-			// Date.now()
-			if (!Date.now) {
-				Date.now = function now() {
-					return new Date().getTime();
-				};
-			}
+    <head>
+        <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+        <title>Infected!</title>
+        <link href='http://fonts.googleapis.com/css?family=Montserrat' rel='stylesheet' type='text/css'>
+        <style>
+            html, body {
+                margin: 0;
+                padding: 0;
+            }
+            body {
+                font-family: 'Montserrat', sans-serif;
+                font-size: 22px;
+            }
+            canvas {
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="static">No canvas support</canvas>
+        <canvas id="field"></canvas>
+        <script type="text/javascript" src="infected.js" ></script>
+        <script type="text/javascript">
+            // ==polyfills==
+            // Date.now()
+            if (!Date.now) {
+                Date.now = function now() {
+                    return new Date().getTime();
+                };
+            }
 
-			var PIXELS_PER_CELL = 5,
-				ANIMATION_FRAME = false,
-				SPEED = 100, // only used if ANIMATION_FRAME !== true
-				PAUSED = false,
-				DEBUG = true,
-				game,
-				gameSettings,
-				gameState;
-			
-			// =canvas=
-			var canvas = document.getElementById('field');
-			canvas.width = document.body.clientWidth;
-			canvas.height = document.body.clientHeight;
-			var ctx = canvas.getContext('2d');
-			ctx.font = '8pt Arial';
-			
-			var staticCanvas = document.getElementById('static');
-			staticCanvas.width = canvas.width;
-			staticCanvas.height = canvas.height;
-			var staticCtx = staticCanvas.getContext('2d');
-			staticCtx.font = '8pt Arial';
-			
-			// =game=
-			game = infected();
-			gameSettings = game.init({
-				width: Math.floor(canvas.width/PIXELS_PER_CELL),
-				height: Math.floor(canvas.height/PIXELS_PER_CELL),
-				aoeSize: 10
-			});
-			gameState = game.state;
-			
-			drawBG(gameState); //draw the inital background
-			
-			// ==events==
-			// =mouse clicks=
-			;(function () {
-				var mouseDownPoint = {x:0, y:0};
-				var mouseDownForce = null;
-				var dragOffset = {x:0, y:0};
-				canvas.onmousedown = function (e) {
-					if (e.which == 1) {
-						mouseDownPoint = {x: Math.floor(e.clientX / PIXELS_PER_CELL), y: Math.floor(e.clientY / PIXELS_PER_CELL)};
-						game.aoe(mouseDownPoint);
-						staticCtx.fillStyle = '#eeeeee';
-						staticCtx.beginPath();
-						staticCtx.arc(e.clientX, e.clientY, gameSettings.aoeSize * PIXELS_PER_CELL, 0, Math.PI*2, true);
-						staticCtx.fill();
-						staticCtx.closePath();
-						drawBG(gameState);
-					}
-				};
-				
-				// =keyboard events=
-				document.onkeyup = function (e) {
-					e = e || window.event;
-					switch (e.charCode || e.keyCode || e.key) {
-						case 68:
-							DEBUG = !DEBUG;
-							break;
-						case 80:
-							PAUSED = !PAUSED;
-							break;
-						default:
-							console.log(e.charCode || e.keyCode || e.key);
-							break;
-					}
-				};
-			})();
-			
-			// ==callback==
-			function tick() {
-				if (!PAUSED) {
-					game.move();
-					ctx.clearRect(0, 0, canvas.width, canvas.height);
-					drawSick(gameState.sick);
-					drawHealthy(gameState.healthy);
-				}
-				if (DEBUG) {
-					drawFramerate();
-					drawFps();
-					//drawHashPos();
-					//drawPos();
-					drawRatio(gameState);
-				}
-				if (ANIMATION_FRAME) {
-					requestAnimationFrame(tick);
-				}
-			}
+            var PIXELS_PER_CELL = 5,
+                ANIMATION_FRAME = false,
+                SPEED = 100, // only used if ANIMATION_FRAME !== true
+                PAUSED = false,
+                DEBUG = true,
+                game,
+                gameSettings,
+                gameState;
+            
+            // =canvas=
+            var canvas = document.getElementById('field');
+            canvas.width = document.body.clientWidth;
+            canvas.height = document.body.clientHeight;
+            var ctx = canvas.getContext('2d');
+            ctx.font = '8pt Arial';
+            
+            var staticCanvas = document.getElementById('static');
+            staticCanvas.width = canvas.width;
+            staticCanvas.height = canvas.height;
+            var staticCtx = staticCanvas.getContext('2d');
+            staticCtx.font = '8pt Arial';
+            
+            // =game=
+            game = infected();
+            gameSettings = game.init({
+                width: Math.floor(canvas.width/PIXELS_PER_CELL),
+                height: Math.floor(canvas.height/PIXELS_PER_CELL),
+                aoeSize: 10
+            });
+            gameState = game.state;
+            
+            drawBG(gameState); //draw the inital background
+            
+            // ==events==
+            // =mouse clicks=
+            ;(function () {
+                var mouseDownPoint = {x:0, y:0};
+                var mouseDownForce = null;
+                var dragOffset = {x:0, y:0};
+                canvas.onmousedown = function (e) {
+                    if (e.which == 1) {
+                        mouseDownPoint = {x: Math.floor(e.clientX / PIXELS_PER_CELL), y: Math.floor(e.clientY / PIXELS_PER_CELL)};
+                        game.aoe(mouseDownPoint);
+                        staticCtx.fillStyle = '#eeeeee';
+                        staticCtx.beginPath();
+                        staticCtx.arc(e.clientX, e.clientY, gameSettings.aoeSize * PIXELS_PER_CELL, 0, Math.PI*2, true);
+                        staticCtx.fill();
+                        staticCtx.closePath();
+                        drawBG(gameState);
+                    }
+                };
+                
+                // =keyboard events=
+                document.onkeyup = function (e) {
+                    e = e || window.event;
+                    switch (e.charCode || e.keyCode || e.key) {
+                        case 68:
+                            DEBUG = !DEBUG;
+                            break;
+                        case 80:
+                            PAUSED = !PAUSED;
+                            break;
+                        default:
+                            console.log(e.charCode || e.keyCode || e.key);
+                            break;
+                    }
+                };
+            })();
+            
+            // ==callback==
+            function tick() {
+                if (!PAUSED) {
+                    game.move();
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    drawSick(gameState.sick);
+                    drawHealthy(gameState.healthy);
+                }
+                if (DEBUG) {
+                    drawFramerate();
+                    drawFps();
+                    //drawHashPos();
+                    //drawPos();
+                    drawRatio(gameState);
+                }
+                if (ANIMATION_FRAME) {
+                    requestAnimationFrame(tick);
+                }
+            }
 
-			// =fps=
-			var drawFps = (function () {
-				var fps = 0;
-				var frameCount = 0;
-				setInterval(function () {
-					fps = frameCount;
-					frameCount = 0;
-				}, 1000); //1 second
-				return function () {
-					frameCount++;
-					ctx.fillStyle = '#000000';
-					ctx.fillText(fps+' fps', canvas.width-30, 20);
-				}
-			})();
-			
-			// =framerate=
-			var drawFramerate = (function () {
-				var lastFrame = new Date().getTime();
-				return function () {
-					var thisFrame = new Date().getTime();
-					ctx.fillStyle = '#000000';
-					ctx.fillText((thisFrame - lastFrame) / 1000, canvas.width-30, 10);
-					lastFrame = thisFrame;
-				}
-			})();
-			
-			// ==draw==
-			function drawSick(sick) {
-				var actor, i;
-				ctx.fillStyle = '#33cc33';
-				for (i=0; i<sick.length; i++) {
-					actor = sick[i];
-					ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
-				}
-			}
-			function drawHealthy(healthy) {
-				var actor, i;
-				ctx.fillStyle = '#777777';
-				for (i=0; i<healthy.length; i++) {
-					actor = healthy[i];
-					ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
-				}
-			}
-			function drawRatio(gameState) {
-				//draw infected to health ratio
-				ctx.fillStyle = '#000000';
-				ctx.fillText(ratio(gameState), 1, 9);
-			}
-			function ratio(gameState) {
-				return gameState.healthy.length+':'+gameState.sick.length;
-			}
-			function drawHashPos(gameState) {
-				for (var w=0; w<gameState.width; w++) {
-					for (var h=0; h<gameState.height; h++) {
-						ctx.fillText(getPosHashActor({x:w, y:h}), w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
-					}
-				}
-			}
-			function drawPos(gameState) {
-				for (var w=0; w<gameState.width; w++) {
-					for (var h=0; h<gameState.height; h++) {
-						ctx.fillText(w+','+h, w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
-					}
-				}
-			}
-			function drawBG(gameState) {
-				staticCtx.fillStyle = '#bbbbbb';
-				for (var i in gameState.obstacles) {
-					var o = gameState.obstacles[i];
-					staticCtx.fillRect(o.x * PIXELS_PER_CELL, o.y * PIXELS_PER_CELL, o.w * PIXELS_PER_CELL, o.h * PIXELS_PER_CELL);
-				}
-			}
-			//	=start=
-			;(function () {
-				if (ANIMATION_FRAME === true && window.requestAnimationFrame) {
-					tick();
-				} else {
-					ANIMATION_FRAME = false;
-					setInterval(tick, SPEED);
-				}
-			})();
-		</script>
-	</body>
+            // =fps=
+            var drawFps = (function () {
+                var fps = 0;
+                var frameCount = 0;
+                setInterval(function () {
+                    fps = frameCount;
+                    frameCount = 0;
+                }, 1000); //1 second
+                return function () {
+                    frameCount++;
+                    ctx.fillStyle = '#000000';
+                    ctx.fillText(fps+' fps', canvas.width-30, 20);
+                }
+            })();
+            
+            // =framerate=
+            var drawFramerate = (function () {
+                var lastFrame = new Date().getTime();
+                return function () {
+                    var thisFrame = new Date().getTime();
+                    ctx.fillStyle = '#000000';
+                    ctx.fillText((thisFrame - lastFrame) / 1000, canvas.width-30, 10);
+                    lastFrame = thisFrame;
+                }
+            })();
+            
+            // ==draw==
+            function drawSick(sick) {
+                var actor, i;
+                ctx.fillStyle = '#33cc33';
+                for (i=0; i<sick.length; i++) {
+                    actor = sick[i];
+                    ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
+                }
+            }
+            function drawHealthy(healthy) {
+                var actor, i;
+                ctx.fillStyle = '#777777';
+                for (i=0; i<healthy.length; i++) {
+                    actor = healthy[i];
+                    ctx.fillRect(actor.x * PIXELS_PER_CELL, actor.y * PIXELS_PER_CELL, PIXELS_PER_CELL, PIXELS_PER_CELL);
+                }
+            }
+            function drawRatio(gameState) {
+                //draw infected to health ratio
+                ctx.fillStyle = '#000000';
+                ctx.fillText(ratio(gameState), 1, 9);
+            }
+            function ratio(gameState) {
+                return gameState.healthy.length+':'+gameState.sick.length;
+            }
+            function drawHashPos(gameState) {
+                for (var w=0; w<gameState.width; w++) {
+                    for (var h=0; h<gameState.height; h++) {
+                        ctx.fillText(getPosHashActor({x:w, y:h}), w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
+                    }
+                }
+            }
+            function drawPos(gameState) {
+                for (var w=0; w<gameState.width; w++) {
+                    for (var h=0; h<gameState.height; h++) {
+                        ctx.fillText(w+','+h, w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
+                    }
+                }
+            }
+            function drawBG(gameState) {
+                staticCtx.fillStyle = '#bbbbbb';
+                for (var i in gameState.obstacles) {
+                    var o = gameState.obstacles[i];
+                    staticCtx.fillRect(o.x * PIXELS_PER_CELL, o.y * PIXELS_PER_CELL, o.w * PIXELS_PER_CELL, o.h * PIXELS_PER_CELL);
+                }
+            }
+            //    =start=
+            ;(function () {
+                if (ANIMATION_FRAME === true && window.requestAnimationFrame) {
+                    tick();
+                } else {
+                    ANIMATION_FRAME = false;
+                    setInterval(tick, SPEED);
+                }
+            })();
+        </script>
+    </body>
 </html>
