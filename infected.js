@@ -1,4 +1,4 @@
-// ==polyfills==
+/* ==polyfills== */
 // Array.some()
 if (!Array.prototype.some) {
 	Array.prototype.some = function(fun /*, thisArg*/) {
@@ -61,23 +61,30 @@ if (typeof Object.create != 'function') {
 	})();
 }
 
+/**
+ * Creates an infected game
+ */
 var infected = function() {
-	var settings = {
-			width: 100,
-			height: 100,
-			sickDensity: .002,
-			healthyDensity: .1,
-			aoeSize: 100
+	var settings = {             // the default settings
+			width: 100,          // width of the world
+			height: 100,         // height of the world
+			sickDensity: .002,   // the ratio of the world that is sick
+			healthyDensity: .1,  // the ratio of the world that is healthy
+			aoeSize: 100         // the radius of the click-kill (Area-of-effect)
 		},
-		state = {
-			staticPosHash: {},
-			all: [],
-			sick: [],
-			healthy: [],
-			obstacles: []
+		state = {                // the current state of the game
+			staticPosHash: {},   // A hash table containing all static (non-moving) objects
+			all: [],             // every actor in the world
+			sick: [],            // all sick actors
+			healthy: [],         // all healthy actors
+			obstacles: []        // all static, non-permeable objects
 		};
 	
-	
+	/**
+	 * Initializes the state to the provided settings
+	 * @param userSettings {Object} any overrides to the default settings
+	 * @returns {Object} the settings used to initialize the game
+	 */
 	function init(userSettings) {
 		//merge settings
 		for (prop in settings) {
@@ -87,7 +94,7 @@ var infected = function() {
 		state.width = settings.width;
 		state.height = settings.height;
 		
-		// ==populate==
+		/* ==populate== */
 		//populate obstacles
 		/* 3 boxes */
 		state.obstacles.push({x: Math.floor(state.width * .1), y: Math.floor(state.height * .1),
@@ -153,6 +160,10 @@ var infected = function() {
 		return settings;
 	}
 
+	/**
+	 * Performs an Area-of-Effect on the world, killing anything in the radius
+	 * @param point {Point} The center of the AOE
+	 */
 	function aoe(point) {
 		//remove sick
 		state.sick = state.sick.filter(function(x){ return !inRange(point, x, settings.aoeSize);});
@@ -160,6 +171,12 @@ var infected = function() {
 		state.healthy = state.healthy.filter(function(x){ return !inRange(point, x, settings.aoeSize);});
 	}
 
+	/**
+	 * Calculates the distance between two points
+	 * @param pos1 {Point} The starting point
+	 * @param pos2 {Point} The ending point
+	 * @return {number} the distance between the two points
+	 */
 	function dist(pos1, pos2) {
 		var xDist = pos1.x - pos2.x,
 			yDist = pos1.y - pos2.y;
@@ -175,18 +192,41 @@ var infected = function() {
 		}
 		return Math.pow(xDist, 2) + Math.pow(yDist, 2);
 	}
+
+	/**
+	 * Calculates if two points are within a given range of each other
+	 * @param pos1 {Point} The starting point
+	 * @param pos2 {Point} The ending point
+	 * @param dist {number} The ending point
+	 * @returns {boolean} true if the points are within {dist} of each other
+	 */
 	function inRange(pos1, pos2, dist) {
 		return Math.abs(pos1.x - pos2.x) <= dist && Math.abs(pos1.y - pos2.y) <= dist;
 	}
+
+	/**
+	 * Calculates an Actors hash
+	 * @param a {Actor} The Actor to hash based on their position
+	 * @returns {number} The hash value
+	 */
 	function getPosHashActor(a) {
 		return getPosHash(a.x, a.y);
 	}
+
+	/**
+	 * Calculates a hash
+	 * @param x {number} The x position
+	 * @param y {number} The y position
+	 * @returns {number} The hash value
+	 */
 	function getPosHash(x, y) {
 		return x * state.height + y;
 	}
 
-
-	// ==movement==
+	/* ==movement== */
+	/**
+	 * Moves all of the actors once
+	 */
 	function move() {
 		var posMap = {}; //location sensitive hash map of all blockers;
 		//copy existing blockers
@@ -196,6 +236,11 @@ var infected = function() {
 		//move healthy
 		moveHealthy(posMap);
 	}
+
+	/**
+	 * Moves all of the sick actors once
+	 * @param posMap {Object} A hash set of the taken positions
+	 */
 	function moveSick(posMap) {
 		var i = state.sick.length,
 			sick,
@@ -204,7 +249,7 @@ var infected = function() {
 			sick = state.sick[i];
 			sick.oldX = sick.x;
 			sick.oldY = sick.y;
-			if (Math.random() < .1) {
+			if (Math.random() < .1) {  // chance of sick moving is 10%
 				moveTowards(sick, state.healthy, posMap);
 				wrap(sick);
 			}
@@ -217,6 +262,11 @@ var infected = function() {
 			}
 		}
 	}
+
+	/**
+	 * Moves all of the healthy actors once
+	 * @param posMap {Object} A hash set of the taken positions
+	 */
 	function moveHealthy(posMap) {
 		var i = state.healthy.length,
 			healthy,
@@ -250,6 +300,12 @@ var infected = function() {
 			}
 		}
 	}
+
+	/**
+	 * Update the fear of the healthy actors
+	 * @param healthy {Array} The healthy actors
+	 * @param posMap {Object} A hash set of the taken positions
+	 */
 	function increaseFear(healthy, posMap) {
 		var topLeft = posMap[getPosHash(healthy.x-1, healthy.y-1)];
 		var topMid = posMap[getPosHash(healthy.x, healthy.y-1)];
@@ -274,6 +330,13 @@ var infected = function() {
 			healthy.fear = Math.max(healthy.fear-1, 0);
 		}
 	}
+
+	/**
+	 * Given a set of targets, moves the actor towards the closest one
+	 * @param actor {Actor} The actor to move
+	 * @param targets {Array} Targets to move towards
+	 * @param posMap {Object} Obstacles in the way
+	 */
 	function moveTowards(actor, targets, posMap) {
 		//find closest target
 		var closestTarget = null;
@@ -326,6 +389,13 @@ var infected = function() {
 		}
 		tryMove2(actor, posMap, direction);
 	}
+
+	/**
+	 * Given a set of targets, moves the actor away from all of them
+	 * @param actor {Actor} The actor to move
+	 * @param targets {Array} Targets to move away from
+	 * @param posMap {Object} Obstacles in the way
+	 */
 	function avoid(actor, targets, posMap) {
 		var openSpace = findOpenSpaceAround(actor, posMap);
 
@@ -333,9 +403,23 @@ var infected = function() {
 		actor.x += openSpace.x;
 		actor.y += openSpace.y;
 	}
+
+	/**
+	 * Given a set of targets, moves the actor away from all of them
+	 * @param actor {Actor} The actor to move
+	 * @param targets {Array} Targets to move away from
+	 * @param posMap {Object} Obstacles in the way
+	 */
 	function runAwayFrom(actor, target, posMap) {
 		tryMove2(actor, posMap, {x: -target.x, y: -target.y});
 	}
+
+	/**
+	 * Attempts to move an {actor} in a {direction}
+	 * @param actor {Actor} The actor to move
+	 * @param posMap {Object} Obstacles in the way
+	 * @param direction {Object} The x,y direction to move
+	 */
 	function tryMove(actor, posMap, direction) {
 		actor.x += direction.x;
 		actor.y += direction.y;
@@ -351,6 +435,13 @@ var infected = function() {
 			}
 		}
 	}
+
+	/**
+	 * Attempts to move an {actor} in a {direction}
+	 * @param actor {Actor} The actor to move
+	 * @param posMap {Object} Obstacles in the way
+	 * @param direction {Object} The x,y direction to move
+	 */
 	function tryMove2(actor, posMap, direction) {
 		//check for obstacle
 		if (!posMap[getPosHash(actor.x+direction.x, actor.y+direction.y)]) { //not blocked
@@ -424,20 +515,32 @@ var infected = function() {
 		}
 		//blocked
 	}
+
+	/**
+	 * Randomly tries to find space around an actor
+	 * @param actor {Actor} The actor to move
+	 * @param posMap {Object} Obstacles in the way
+	 * @returns {Point} A director to move as an offset of x,y
+	 */
 	function findOpenSpaceAround(actor, posMap) {
 		var x, y, 
-			Xdirections = [-1, 0, 1].shuffle(), 
-			Ydirections = [-1, 0, 1].shuffle();
+			xdirections = [-1, 0, 1].shuffle(),
+			ydirections = [-1, 0, 1].shuffle();
 		//find unoccupied space
-		for (var x=0; x<Xdirections.length; x++) {
-			for (var y=0; y<Ydirections.length; y++) {
-				if (!posMap[getPosHash(actor.x+Xdirections[x], actor.y+Ydirections[y])]) {
-					return {x: Xdirections[x], y: Ydirections[y]};
+		for (var x=0; x<xdirections.length; x++) {
+			for (var y=0; y<ydirections.length; y++) {
+				if (!posMap[getPosHash(actor.x+xdirections[x], actor.y+ydirections[y])]) {
+					return {x: xdirections[x], y: ydirections[y]};
 				}
 			}
 		}
 		return {x: 0, y: 0};
 	}
+
+	/**
+	 * Randomly moves the actor
+	 * @param actor {Actor} The actor to move
+	 */
 	function moveRandom(actor) {
 		var entropy = Math.random();
 		if (entropy > .7) {
@@ -451,6 +554,11 @@ var infected = function() {
 			actor.y--;
 		}
 	}
+
+	/**
+	 * Wraps an actor if they have walked off the world
+	 * @param actor {Actor} The actor to wrap
+	 */
 	function wrap(actor) {
 		if (actor.x < 0) {
 			actor.x = state.width;
@@ -465,6 +573,11 @@ var infected = function() {
 			actor.y = 0;
 		}
 	}
+
+	/**
+	 * Returns a random position in the world
+	 * @returns {Point} random position
+	 */
 	function randomPos() {
 		return {
 			x: Math.floor(Math.random() * state.width),
