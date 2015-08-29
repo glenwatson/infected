@@ -46,7 +46,6 @@
             canvas.width = document.body.clientWidth;
             canvas.height = document.body.clientHeight;
             var ctx = canvas.getContext('2d');
-            ctx.font = '8pt Arial';
             
             var staticCanvas = document.getElementById('static');
             staticCanvas.width = canvas.width;
@@ -63,7 +62,7 @@
             });
             gameState = game.state;
             
-            drawBG(gameState); //draw the inital background
+            drawBG(gameState); //draw the initial background
             
             // ==events==
             // =mouse clicks=
@@ -108,6 +107,15 @@
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
                     drawSick(gameState.sick);
                     drawHealthy(gameState.healthy);
+                    if (game.isOver()) {
+                        if (game.noSick()) {
+                            // player won
+                            showWin();
+                        } else if (game.noHealthy()) {
+                            // player lost
+                            showLoss();
+                        }
+                    }
                 }
                 if (DEBUG) {
                     drawFramerate();
@@ -132,6 +140,7 @@
                 return function () {
                     frameCount++;
                     ctx.fillStyle = '#000000';
+                    ctx.font = '8pt Arial';
                     ctx.fillText(fps+' fps', canvas.width-30, 20);
                 }
             })();
@@ -142,12 +151,24 @@
                 return function () {
                     var thisFrame = new Date().getTime();
                     ctx.fillStyle = '#000000';
+                    ctx.font = '8pt Arial';
                     ctx.fillText((thisFrame - lastFrame) / 1000, canvas.width-30, 10);
                     lastFrame = thisFrame;
                 }
             })();
             
             // ==draw==
+
+            function showWin() {
+                ctx.fillStyle = '#000000';
+                ctx.font = '30pt Arial';
+                ctx.fillText("You have successfully stopped the infection!", (canvas.width / 2) - 250, (canvas.height / 2) - 20);
+            }
+            function showLoss() {
+                ctx.fillStyle = '#000000';
+                ctx.font = '30pt Arial';
+                ctx.fillText("The infection has taken over!", (canvas.width / 2) - 250, (canvas.height / 2) - 20);
+            }
             function drawSick(sick) {
                 var actor, i;
                 ctx.fillStyle = '#33cc33';
@@ -167,12 +188,14 @@
             function drawRatio(gameState) {
                 //draw infected to health ratio
                 ctx.fillStyle = '#000000';
+                ctx.font = '8pt Arial';
                 ctx.fillText(ratio(gameState), 1, 9);
             }
             function ratio(gameState) {
                 return gameState.healthy.length+':'+gameState.sick.length;
             }
             function drawHashPos(gameState) {
+                ctx.font = '8pt Arial';
                 for (var w=0; w<gameState.width; w++) {
                     for (var h=0; h<gameState.height; h++) {
                         ctx.fillText(getPosHashActor({x:w, y:h}), w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);
@@ -180,6 +203,7 @@
                 }
             }
             function drawPos(gameState) {
+                ctx.font = '8pt Arial';
                 for (var w=0; w<gameState.width; w++) {
                     for (var h=0; h<gameState.height; h++) {
                         ctx.fillText(w+','+h, w*PIXELS_PER_CELL, h*PIXELS_PER_CELL+8);

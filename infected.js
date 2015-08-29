@@ -177,6 +177,30 @@ var infected = function() {
     }
 
     /**
+     * Is the game over
+     * @returns {boolean} if the game is over
+     */
+    function isOver() {
+        return noSick() || noHealthy();
+    }
+
+    /**
+     * Have all of the sick actors been eliminated
+     * @returns {boolean} if the player has eliminated all of the sick actors
+     */
+    function noSick() {
+        return state.sick.length == 0;
+    }
+
+    /**
+     * Have all of the healthy actors been eliminated
+     * @returns {boolean} if there are no more healthy actors
+     */
+    function noHealthy() {
+        return state.healthy.length == 0;
+    }
+
+    /**
      * Calculates the distance between two points
      * @param pos1 {Point} The starting point
      * @param pos2 {Point} The ending point
@@ -594,6 +618,9 @@ var infected = function() {
         init: init,
         move: move,
         aoe: aoe,
-        state: state
+        state: state,
+        isOver: isOver,
+        noSick: noSick,
+        noHealthy, noHealthy
     };
 };
